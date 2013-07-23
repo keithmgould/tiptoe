@@ -17,7 +17,6 @@
 #define SAMPLE_RATE         (8000)
 #define PA_SAMPLE_TYPE      paFloat32
 #define FRAMES_PER_BUFFER   (128)
-// #define BYTES_PER_BUFFER    (512) // 4 * FRAMES_PER_BUFFER
 
 // Convenience!!
 using namespace std;
@@ -67,7 +66,7 @@ void encryptBuffer (const void * plainBuffer, float * encryptedBuffer, paTestDat
   // 5) Use recovered encrypted data as ouput
   for(int i = 0; i < FRAMES_PER_BUFFER; i++ )
   {
-    encryptedBuffer[i] = byteArrayRecoveredBuffer[i];
+    encryptedBuffer[i] = floatRecoveredBuffer[i];
   }
 
 }
@@ -100,7 +99,6 @@ static int encryptCallback( const void *inputBuffer,
       // encrypt byte array
       float encryptedBuffer[framesPerBuffer];
       encryptBuffer(inputBuffer, encryptedBuffer, data);
-      return paComplete;
       for( i=0; i<framesPerBuffer; i++ )
       {
           *out++ = encryptedBuffer[i] * 2;
