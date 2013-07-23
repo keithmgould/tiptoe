@@ -27,8 +27,6 @@ const int BYTES_PER_BUFFER = 4 * FRAMES_PER_BUFFER;
 
 typedef struct
 {
-  int frameIndex;
-  int samples[FRAMES_PER_BUFFER];
   CTR_Mode< AES >::Encryption encryptor;
   CTR_Mode< AES >::Decryption decryptor;
 }
@@ -83,6 +81,7 @@ static int encryptCallback( const void *inputBuffer,
   SAMPLE *out = (SAMPLE*)outputBuffer;
   const SAMPLE *in = (const SAMPLE*)inputBuffer;
   unsigned int i;
+  float encryptedBuffer[framesPerBuffer];
   (void) timeInfo; /* Prevent unused variable warnings. */
   (void) statusFlags;
 
@@ -95,14 +94,10 @@ static int encryptCallback( const void *inputBuffer,
   }
   else
   {
-      // convert all of the frames to byte array
-      // encrypt byte array
-      float encryptedBuffer[framesPerBuffer];
       encryptBuffer(inputBuffer, encryptedBuffer, data);
       for( i=0; i<framesPerBuffer; i++ )
       {
           *out++ = encryptedBuffer[i] * 2;
-          data->frameIndex += 1;
       }
   }
   return paContinue;
@@ -124,10 +119,6 @@ int main(void)
     SecByteBlock key(AES::DEFAULT_KEYLENGTH);
     rng.GenerateBlock( key, key.size() );
 
-    string plain, cipher, encoded, recovered;
-
-    plain = "Yay plaintext.  This is the coolest thing ever.";
-
     byte ctr[AES::BLOCKSIZE];
     rng.GenerateBlock(ctr, sizeof(ctr));
 
@@ -139,8 +130,6 @@ int main(void)
 
     data.encryptor = e;
     data.decryptor = d;
-    data.frameIndex = 0;
-
 
     err = Pa_Initialize();
     if( err != paNoError ) goto error;
