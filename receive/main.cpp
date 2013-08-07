@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "portaudio.h"
+#include <vector>
+#include <iostream>
+#include <fstream>
 
 #define SAMPLE_RATE  (8000)
 #define FRAMES_PER_BUFFER (512)
 #define NUM_SECONDS     (1)
-#define NUM_CHANNELS    (2)
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
 /** Set to 1 if you want to capture the recording to a file. */
@@ -34,18 +36,55 @@ typedef unsigned char SAMPLE;
 #define PRINTF_S_FORMAT "%d"
 #endif
 
+using namespace std;
+
 typedef struct
 {
     int          frameIndex;  /* Index into sample array. */
     int          maxFrameIndex;
     SAMPLE      *recordedSamples;
+    vector<bool> bits;
 }
 paTestData;
 
-/* This routine will be called by the PortAudio engine when audio is needed.
-** It may be called at interrupt level on some machines so don't do anything
-** that could mess up the system like calling malloc() or free().
-*/
+void demodulator(const void * inputBuffer, paTestData * data)
+{
+  float * floatInputBuffer = (float *) inputBuffer;
+  float localMaximum = 0.0;
+  int localMaximumPosition = 0;
+  int distanceBetweenPeaks = 0;
+  int previousMaximumPosition = 0;
+  int previousDistanceBetweenPeaks = 0;
+  bool newMaximumSet = false;
+  // // 1) find the peaks
+  for(int i=0; i<FRAMES_PER_BUFFER;i++)
+  {
+    if(floatInputBuffer[i] >= localMaximum)
+    {
+      // we are going up
+      localMaximum = floatInputBuffer[i];
+      localMaximumPosition = i;
+      newMaximumSet = true;
+    }else{
+      // // we are going down
+      if (newMaximumSet)
+      {
+        newMaximumSet = false;
+        distanceBetweenPeaks = localMaximumPosition - previousMaximumPosition;
+        cout << distanceBetweenPeaks << ",";
+        if(distanceBetweenPeaks > previousDistanceBetweenPeaks)
+        {
+          data->bits.push_back(true);
+        }else{
+          data->bits.push_back(false);
+        }
+        previousDistanceBetweenPeaks = distanceBetweenPeaks;
+        previousMaximumPosition = localMaximumPosition;
+      }
+    }
+  }
+}
+
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
                            unsigned long framesPerBuffer,
                            const PaStreamCallbackTimeInfo* timeInfo,
@@ -54,7 +93,7 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
 {
     paTestData *data = (paTestData*)userData;
     const SAMPLE *rptr = (const SAMPLE*)inputBuffer;
-    SAMPLE *wptr = &data->recordedSamples[data->frameIndex * NUM_CHANNELS];
+    SAMPLE *wptr = &data->recordedSamples[data->frameIndex];
     long framesToCalc;
     long i;
     int finished;
@@ -63,7 +102,6 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
     (void) outputBuffer; /* Prevent unused variable warnings. */
     (void) timeInfo;
     (void) statusFlags;
-    (void) userData;
 
     if( framesLeft < framesPerBuffer )
     {
@@ -80,70 +118,18 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
     {
         for( i=0; i<framesToCalc; i++ )
         {
-            *wptr++ = SAMPLE_SILENCE;  /* left */
-            if( NUM_CHANNELS == 2 ) *wptr++ = SAMPLE_SILENCE;  /* right */
+            *wptr++ = SAMPLE_SILENCE;
         }
     }
     else
     {
+        demodulator(inputBuffer, data);
         for( i=0; i<framesToCalc; i++ )
         {
-            *wptr++ = *rptr++;  /* left */
-            if( NUM_CHANNELS == 2 ) *wptr++ = *rptr++;  /* right */
+            *wptr++ = *rptr++;
         }
     }
     data->frameIndex += framesToCalc;
-    return finished;
-}
-
-/* This routine will be called by the PortAudio engine when audio is needed.
-** It may be called at interrupt level on some machines so don't do anything
-** that could mess up the system like calling malloc() or free().
-*/
-static int playCallback( const void *inputBuffer, void *outputBuffer,
-                         unsigned long framesPerBuffer,
-                         const PaStreamCallbackTimeInfo* timeInfo,
-                         PaStreamCallbackFlags statusFlags,
-                         void *userData )
-{
-    paTestData *data = (paTestData*)userData;
-    SAMPLE *rptr = &data->recordedSamples[data->frameIndex * NUM_CHANNELS];
-    SAMPLE *wptr = (SAMPLE*)outputBuffer;
-    unsigned int i;
-    int finished;
-    unsigned int framesLeft = data->maxFrameIndex - data->frameIndex;
-
-    (void) inputBuffer; /* Prevent unused variable warnings. */
-    (void) timeInfo;
-    (void) statusFlags;
-    (void) userData;
-
-    if( framesLeft < framesPerBuffer )
-    {
-        /* final buffer... */
-        for( i=0; i<framesLeft; i++ )
-        {
-            *wptr++ = *rptr++;  /* left */
-            if( NUM_CHANNELS == 2 ) *wptr++ = *rptr++;  /* right */
-        }
-        for( ; i<framesPerBuffer; i++ )
-        {
-            *wptr++ = 0;  /* left */
-            if( NUM_CHANNELS == 2 ) *wptr++ = 0;  /* right */
-        }
-        data->frameIndex += framesLeft;
-        finished = paComplete;
-    }
-    else
-    {
-        for( i=0; i<framesPerBuffer; i++ )
-        {
-            *wptr++ = *rptr++;  /* left */
-            if( NUM_CHANNELS == 2 ) *wptr++ = *rptr++;  /* right */
-        }
-        data->frameIndex += framesPerBuffer;
-        finished = paContinue;
-    }
     return finished;
 }
 
@@ -157,7 +143,6 @@ int main(void)
     PaError             err = paNoError;
     paTestData          data;
     int                 i;
-    int                 totalFrames;
     int                 numSamples;
     int                 numBytes;
     SAMPLE              max, val;
@@ -165,11 +150,10 @@ int main(void)
 
     printf("patest_record.c\n"); fflush(stdout);
 
-    data.maxFrameIndex = totalFrames = NUM_SECONDS * SAMPLE_RATE; /* Record for a few seconds. */
+    data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;
-    numSamples = totalFrames * NUM_CHANNELS;
     numBytes = numSamples * sizeof(SAMPLE);
-    data.recordedSamples = (SAMPLE *) malloc( numBytes ); /* From now on, recordedSamples is initialised. */
+    data.recordedSamples = (SAMPLE *) malloc( numBytes );
     if( data.recordedSamples == NULL )
     {
         printf("Could not allocate record array.\n");
@@ -180,12 +164,12 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto done;
 
-    inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
+    inputParameters.device = 2; //Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {
         fprintf(stderr,"Error: No default input device.\n");
         goto done;
     }
-    inputParameters.channelCount = 2;                    /* stereo input */
+    inputParameters.channelCount = 1;
     inputParameters.sampleFormat = PA_SAMPLE_TYPE;
     inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultLowInputLatency;
     inputParameters.hostApiSpecificStreamInfo = NULL;
@@ -204,7 +188,7 @@ int main(void)
 
     err = Pa_StartStream( stream );
     if( err != paNoError ) goto done;
-    printf("\n=== Now recording!! Please speak into the microphone. ===\n"); fflush(stdout);
+    printf("\n=== Now recording!!\n"); fflush(stdout);
 
     while( ( err = Pa_IsStreamActive( stream ) ) == 1 )
     {
@@ -246,53 +230,23 @@ int main(void)
         }
         else
         {
-            fwrite( data.recordedSamples, NUM_CHANNELS * sizeof(SAMPLE), totalFrames, fid );
+            fwrite( data.recordedSamples, sizeof(SAMPLE), numSamples, fid );
             fclose( fid );
             printf("Wrote data to 'recorded.raw'\n");
         }
+
+        ofstream bitFile;
+        bitFile.open ("data.txt");
+        vector<bool>::iterator it;
+        for(it = data.bits.begin(); it != data.bits.end(); it++)
+        {
+          bitFile << *it;
+        }
+        bitFile.close();
+        printf("Wrote data to 'data.txt'\n");
     }
 #endif
 
-    /* Playback recorded data.  -------------------------------------------- */
-    data.frameIndex = 0;
-
-    outputParameters.device = Pa_GetDefaultOutputDevice(); /* default output device */
-    if (outputParameters.device == paNoDevice) {
-        fprintf(stderr,"Error: No default output device.\n");
-        goto done;
-    }
-    outputParameters.channelCount = 2;                     /* stereo output */
-    outputParameters.sampleFormat =  PA_SAMPLE_TYPE;
-    outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
-    outputParameters.hostApiSpecificStreamInfo = NULL;
-
-    printf("\n=== Now playing back. ===\n"); fflush(stdout);
-    err = Pa_OpenStream(
-              &stream,
-              NULL, /* no input */
-              &outputParameters,
-              SAMPLE_RATE,
-              FRAMES_PER_BUFFER,
-              paClipOff,      /* we won't output out of range samples so don't bother clipping them */
-              playCallback,
-              &data );
-    if( err != paNoError ) goto done;
-
-    if( stream )
-    {
-        err = Pa_StartStream( stream );
-        if( err != paNoError ) goto done;
-
-        printf("Waiting for playback to finish.\n"); fflush(stdout);
-
-        while( ( err = Pa_IsStreamActive( stream ) ) == 1 ) Pa_Sleep(100);
-        if( err < 0 ) goto done;
-
-        err = Pa_CloseStream( stream );
-        if( err != paNoError ) goto done;
-
-        printf("Done.\n"); fflush(stdout);
-    }
 
 done:
     Pa_Terminate();
