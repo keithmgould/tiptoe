@@ -74,7 +74,8 @@ void demodulator(const void * inputBuffer, paTestData * data)
       // we are going down
       if (data->goingDown == false)
       {
-        // we have just begun to go down, hence we have found a new local maximum
+        // we have just begun to go down,
+        // hence we have found a new local maximum
         data->goingDown = true;
         localMaximumPosition = i;
         distanceBetweenPeaks = localMaximumPosition - data->previousMaximumPosition;
