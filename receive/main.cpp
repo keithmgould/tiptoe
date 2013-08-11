@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include "portaudio.h"
 #include <vector>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 
-#define SAMPLE_RATE  (8000)
+#define SAMPLE_RATE  (16000)
 #define FRAMES_PER_BUFFER (512)
 #define NUM_SECONDS     (1)
 /* #define DITHER_FLAG     (paDitherOff) */
@@ -43,46 +44,51 @@ typedef struct
     int          frameIndex;  /* Index into sample array. */
     int          maxFrameIndex;
     SAMPLE      *recordedSamples;
+    int         previousMaximumPosition;
+    int         previousDistanceBetweenPeaks;
+    int         totalSamples;
+    bool        goingDown;
     vector<bool> bits;
+
 }
 paTestData;
 
 void demodulator(const void * inputBuffer, paTestData * data)
 {
   float * floatInputBuffer = (float *) inputBuffer;
-  float localMaximum = 0.0;
   int localMaximumPosition = 0;
   int distanceBetweenPeaks = 0;
-  int previousMaximumPosition = 0;
-  int previousDistanceBetweenPeaks = 0;
-  bool newMaximumSet = false;
-  // // 1) find the peaks
-  for(int i=0; i<FRAMES_PER_BUFFER;i++)
+  bool goingDown = false;
+  for(int i=1; i<FRAMES_PER_BUFFER;i++)
   {
-    if(floatInputBuffer[i] >= localMaximum)
+    data->totalSamples += 1;
+    if(floatInputBuffer[i] >= floatInputBuffer[i-1])
     {
-      // we are going up
-      localMaximum = floatInputBuffer[i];
-      localMaximumPosition = i;
-      newMaximumSet = true;
-    }else{
-      // // we are going down
-      if (newMaximumSet)
+      // we are going up or cresting
+      data->goingDown = false;
+    }else if(floatInputBuffer[i] < floatInputBuffer[i-1]){
+      // we are going down
+      if (data->goingDown == false)
       {
-        newMaximumSet = false;
-        distanceBetweenPeaks = localMaximumPosition - previousMaximumPosition;
-        cout << distanceBetweenPeaks << ",";
-        if(distanceBetweenPeaks > previousDistanceBetweenPeaks)
+        data->goingDown = true;
+        // we have just begun to go down (found a new local maximum)
+        localMaximumPosition = i;
+        distanceBetweenPeaks = localMaximumPosition - data->previousMaximumPosition;
+        cout << distanceBetweenPeaks;
+        cout << ",";
+        if(distanceBetweenPeaks > data->previousDistanceBetweenPeaks)
         {
           data->bits.push_back(true);
         }else{
           data->bits.push_back(false);
         }
-        previousDistanceBetweenPeaks = distanceBetweenPeaks;
-        previousMaximumPosition = localMaximumPosition;
+        data->previousDistanceBetweenPeaks = distanceBetweenPeaks;
+        data->previousMaximumPosition = localMaximumPosition;
       }
     }
   }
+  data->previousMaximumPosition = localMaximumPosition - FRAMES_PER_BUFFER;
+  cout << endl;
 }
 
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
@@ -152,6 +158,9 @@ int main(void)
 
     data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;
+    data.previousMaximumPosition = 0;
+    data.previousDistanceBetweenPeaks = 0;
+    data.totalSamples = 0;
     numBytes = numSamples * sizeof(SAMPLE);
     data.recordedSamples = (SAMPLE *) malloc( numBytes );
     if( data.recordedSamples == NULL )
@@ -193,7 +202,6 @@ int main(void)
     while( ( err = Pa_IsStreamActive( stream ) ) == 1 )
     {
         Pa_Sleep(1000);
-        printf("index = %d\n", data.frameIndex ); fflush(stdout);
     }
     if( err < 0 ) goto done;
 
