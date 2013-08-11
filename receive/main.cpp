@@ -20,39 +20,44 @@
 typedef float SAMPLE;
 #define SAMPLE_SILENCE  (0.0f)
 #define PRINTF_S_FORMAT "%.8f"
-#elif 1
-#define PA_SAMPLE_TYPE  paInt16
-typedef short SAMPLE;
-#define SAMPLE_SILENCE  (0)
-#define PRINTF_S_FORMAT "%d"
-#elif 0
-#define PA_SAMPLE_TYPE  paInt8
-typedef char SAMPLE;
-#define SAMPLE_SILENCE  (0)
-#define PRINTF_S_FORMAT "%d"
-#else
-#define PA_SAMPLE_TYPE  paUInt8
-typedef unsigned char SAMPLE;
-#define SAMPLE_SILENCE  (128)
-#define PRINTF_S_FORMAT "%d"
 #endif
 
 using namespace std;
 
 typedef struct
 {
-    int          frameIndex;  /* Index into sample array. */
-    int          maxFrameIndex;
-    SAMPLE      *recordedSamples;
-    int         previousMaximumPosition;
-    int         previousDistanceBetweenPeaks;
-    int         totalSamples;
-    bool        goingDown;
-    vector<bool> bits;
+    int         frameIndex;                     //Index into sample array
+    int         maxFrameIndex;
+    SAMPLE      *recordedSamples;               // holds actual floating point audio samples.  not needed
+    int         previousMaximumPosition;        // discrete position of previous local sinusoid maximum
+    int         previousDistanceBetweenPeaks;   // discrete distance between last two sinusoid maximums
+    bool        goingDown;                      // are we in the middle of rising or falling on the sinusoid
+    vector<bool> bits;                          // hold the data post demodulation
 
 }
 paTestData;
 
+/*
+  Demodulator: turns raw digitized audio into data.
+
+  Based on the Hermes IncDec algorithm.
+
+  Pseudo Code:
+  for each sinusoid in the input sound signal
+    fcurr = current sinusoid frequency
+    fprev = previous sinusoid frequency
+    if fcurr > fprev
+      output 1
+    else
+      output 0
+    end
+  end
+
+  Notes:
+  Due to the fact that we must carry information over from the previous buffer,
+  some of the information is stored in the data struct.
+
+*/
 void demodulator(const void * inputBuffer, paTestData * data)
 {
   float * floatInputBuffer = (float *) inputBuffer;
@@ -61,7 +66,6 @@ void demodulator(const void * inputBuffer, paTestData * data)
   bool goingDown = false;
   for(int i=1; i<FRAMES_PER_BUFFER;i++)
   {
-    data->totalSamples += 1;
     if(floatInputBuffer[i] >= floatInputBuffer[i-1])
     {
       // we are going up or cresting
@@ -74,8 +78,6 @@ void demodulator(const void * inputBuffer, paTestData * data)
         // we have just begun to go down (found a new local maximum)
         localMaximumPosition = i;
         distanceBetweenPeaks = localMaximumPosition - data->previousMaximumPosition;
-        cout << distanceBetweenPeaks;
-        cout << ",";
         if(distanceBetweenPeaks > data->previousDistanceBetweenPeaks)
         {
           data->bits.push_back(true);
@@ -88,7 +90,6 @@ void demodulator(const void * inputBuffer, paTestData * data)
     }
   }
   data->previousMaximumPosition = localMaximumPosition - FRAMES_PER_BUFFER;
-  cout << endl;
 }
 
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
@@ -160,7 +161,6 @@ int main(void)
     data.frameIndex = 0;
     data.previousMaximumPosition = 0;
     data.previousDistanceBetweenPeaks = 0;
-    data.totalSamples = 0;
     numBytes = numSamples * sizeof(SAMPLE);
     data.recordedSamples = (SAMPLE *) malloc( numBytes );
     if( data.recordedSamples == NULL )
