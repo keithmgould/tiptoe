@@ -38,7 +38,7 @@ typedef struct
 paTestData;
 
 /*
-  Demodulator: turns raw digitized audio into data.
+  Demodulator: turns raw digitized audio into binary data.
 
   Based on the Hermes IncDec algorithm.
 
@@ -61,8 +61,8 @@ paTestData;
 void demodulator(const void * inputBuffer, paTestData * data)
 {
   float * floatInputBuffer = (float *) inputBuffer;
-  int localMaximumPosition = 0;
-  int distanceBetweenPeaks = 0;
+  int localMaximumPosition;
+  int distanceBetweenPeaks;
   bool goingDown = false;
   for(int i=1; i<FRAMES_PER_BUFFER;i++)
   {
@@ -74,16 +74,11 @@ void demodulator(const void * inputBuffer, paTestData * data)
       // we are going down
       if (data->goingDown == false)
       {
+        // we have just begun to go down, hence we have found a new local maximum
         data->goingDown = true;
-        // we have just begun to go down (found a new local maximum)
         localMaximumPosition = i;
         distanceBetweenPeaks = localMaximumPosition - data->previousMaximumPosition;
-        if(distanceBetweenPeaks > data->previousDistanceBetweenPeaks)
-        {
-          data->bits.push_back(true);
-        }else{
-          data->bits.push_back(false);
-        }
+        data->bits.push_back(distanceBetweenPeaks > data->previousDistanceBetweenPeaks);
         data->previousDistanceBetweenPeaks = distanceBetweenPeaks;
         data->previousMaximumPosition = localMaximumPosition;
       }
