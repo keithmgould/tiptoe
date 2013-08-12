@@ -12,6 +12,7 @@
 #include <bitset>
 #include <math.h>
 #include "portaudio.h"
+#include "codec2.h"
 #include "transcode.cpp"
 
 #define SAMPLE_RATE   (6000)
