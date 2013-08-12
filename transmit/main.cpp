@@ -6,11 +6,13 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <csignal>
 #include <fstream>
 #include <vector>
 #include <bitset>
 #include <math.h>
 #include "portaudio.h"
+#include "transcode.cpp"
 
 #define SAMPLE_RATE   (6000)
 #define FRAMES_PER_BUFFER  (512)
@@ -21,38 +23,24 @@
 
 using namespace std;
 
-#define LOW_TABLE_SIZE   (9)
+#define LOW_TABLE_SIZE    (12)
+#define BASE_TABLE_SIZE   (9)
 #define HIGH_TABLE_SIZE   (6)
+#define LOW  (0)
+#define BASE (1)
+#define HIGH (2)
+
 typedef struct
 {
-    float low_sine[LOW_TABLE_SIZE];
+    float base_sine[BASE_TABLE_SIZE];
     float high_sine[HIGH_TABLE_SIZE];
-    int mode;                           // The frequency we are on: high or low
+    float low_sine[LOW_TABLE_SIZE];
+    int mode;                           // The frequency we are on: base, high or low
     int phase;                          // Where in the sinusoid we are
 }
 transmitData;
 
-// NOTE: this can just be done with a table. Each unsigned Char will correspond to two
-// differnt unsigned chars.  the mapping can be hardcoded.
-void transcode(vector<unsigned char> compressedBytes, vector<bool>& transcodedBits)
-{
-  for(vector<unsigned char>::iterator i = compressedBytes.begin(); i != compressedBytes.end(); i++)
-  {
-    bitset<8> bits = bitset<8>(*i);
-    for(int j=0; j < 8; j++)
-    {
-      if(bits[j] == 1)
-      {
-        transcodedBits.push_back(1);
-        transcodedBits.push_back(0);
-      }else{
-        transcodedBits.push_back(0);
-        transcodedBits.push_back(1);
-      }
-    }
-  }
-}
-
+// SO DUH: Sample output must equal sample input count.
 static int transmitCallback( const void *inputBuffer, void *outputBuffer,
                             unsigned long framesPerBuffer,
                             const PaStreamCallbackTimeInfo* timeInfo,
@@ -68,61 +56,73 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
 
     // faux input -- some random bytes
     vector<unsigned char> faux;
-    int rando;
 
-    // push a bunch of fake data into the faux
-    for(int i = 0; i < 16; i++)
-    {
-      rando = rand();
-      faux.push_back ( (unsigned char) rando);
-    }
+    faux.push_back ( 0x00 );
+    faux.push_back ( 0xFF );
+    faux.push_back ( 0xEE );
+    faux.push_back ( 0xA5 );
+    faux.push_back ( 0xB2 );
+    faux.push_back ( 0xDD );
 
     vector<bool> transcodedBits;
-    transcode(faux, transcodedBits);
-
-    // lets print out the bytes so we can verify on the OTHER SIDE
-    for(vector<unsigned char>::iterator i = faux.begin(); i != faux.end(); i++)
-    {
-      cout << (int)*i << ",";
-    }
-
-    cout << "-- " << transcodedBits.size();
+    Transcode::Perform(faux, transcodedBits);
+    vector<bool>::iterator bitIterator = transcodedBits.begin();
     cout << endl;
-
-
-
-
+    for(bitIterator; bitIterator != transcodedBits.end(); bitIterator++)
+    {
+      cout << *bitIterator;
+    }
+    cout << endl;
+    bitIterator = transcodedBits.begin();
+    bool nextSinusoid = false;
     for( int i=0; i<framesPerBuffer; i++ )
     {
-        if (data->mode == 0){
+        if (data->mode == HIGH){
           *out++ = data->high_sine[data->phase];
           data->phase += 1;
-          if(data->phase >= HIGH_TABLE_SIZE) { data->phase = 0; data->mode = 1;}
+          if(data->phase >= HIGH_TABLE_SIZE) { nextSinusoid = true;}
+        }else if(data->mode == BASE){
+          *out++ = data->base_sine[data->phase];
+          data->phase += 1;
+          if(data->phase >= BASE_TABLE_SIZE) { nextSinusoid = true;}
         }else{
           *out++ = data->low_sine[data->phase];
           data->phase += 1;
-          if(data->phase >= LOW_TABLE_SIZE) { data->phase = 0; data->mode = 0;}
+          if(data->phase >= LOW_TABLE_SIZE) { nextSinusoid = true;}
+        }
+        if(nextSinusoid)
+        {
+          if(bitIterator >= transcodedBits.end())
+          {
+            cout <<  endl << "all out of bits yo" << endl;
+            return 1;
+          }
+          nextSinusoid = false;
+          data->phase = 0;
+          if(bitIterator == transcodedBits.begin())
+          {
+            data->mode = 1;
+          }
+          if(*bitIterator == 1)
+          {
+            data->mode += 1;
+          }else{
+            data->mode -= 1;
+          }
+          cout << *bitIterator << ":" << data->mode << ",";
+          if(data->mode > 2 || data->mode < 0)
+          {
+            cout << endl << "data-> mode is out of range.  It is now: " << data->mode << endl;
+            cout << "occurred at: " << i << endl;
+            return 1;
+          }
+          bitIterator += 1;
         }
     }
     return paContinue;
 }
 
-
-/*
- * Read in the bytes from a file
- */
-static std::vector<char> ReadAllBytes(char const* filename)
-{
-    ifstream ifs(filename, ios::binary|ios::ate);
-    ifstream::pos_type pos = ifs.tellg();
-    std::vector<char>  result(pos);
-    ifs.seekg(0, ios::beg);
-    ifs.read(&result[0], pos);
-    return result;
-}
-
 /*******************************************************************/
-int main(void);
 int main(void)
 {
     PaStreamParameters outputParameters;
@@ -131,26 +131,24 @@ int main(void)
     transmitData data;
     int i;
 
-    // read in the bytes from the audio file
-    // data.compressedBytes = ReadAllBytes("./compressed.opus");
-    // data.bytePosition = data.compressedBytes.begin();
-
     /* initialise sinusoidal wavetable */
+    for( i=0; i<BASE_TABLE_SIZE; i++ )
+    {
+        data.base_sine[i] = (float) cos( ((double)i/(double)BASE_TABLE_SIZE) * M_PI * 2.0);
+    }
+
+    for( i=0; i<HIGH_TABLE_SIZE; i++ )
+    {
+        data.high_sine[i] = (float) cos( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0);
+    }
+
     for( i=0; i<LOW_TABLE_SIZE; i++ )
     {
         data.low_sine[i] = (float) cos( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0);
     }
 
-
-    for( i=0; i<(HIGH_TABLE_SIZE * 2); i++ )
-    {
-        data.high_sine[i] = (float) cos( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0);
-    }
-
-    // data.compressedBytes.push_back(0xAA);
-
     data.phase = 0;
-    data.mode = 0;
+    data.mode = BASE;
 
     err = Pa_Initialize();
     if( err != paNoError ) goto error;

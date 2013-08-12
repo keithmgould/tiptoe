@@ -44,12 +44,4 @@ SUITE (utilities) {
     std::string correct = "hello";
     CHECK_EQUAL(correct, result);
   }
-
-  TEST(string_to_byte_array){
-    std::string starting_value = "hello";
-    unsigned char result[5] = { 0x00,0x00,0x00,0x00,0x00 };
-    Utility::StringToByteArray(&starting_value, result);
-    unsigned char correct[5] = { 0x68, 0x65, 0x6c, 0x6c, 0x6f};
-    CHECK_ARRAY_EQUAL(correct, result, 5);
-  }
 }

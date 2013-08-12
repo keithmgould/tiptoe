@@ -93,17 +93,4 @@ class Utility {
     std::string recasted( reinterpret_cast< const char * >(byte_array), byte_count ) ;
     *str = recasted;
   }
-
-
-  /******************************************
-   *
-   * Convert from string to byte array
-   */
-  // static void StringToByteArray( std::string * str, unsigned char byte_array[])
-  // {
-    // std::strcpy (byte_array, *str->c_str());
-  // }
-
-
-
 };
