@@ -1,7 +1,10 @@
+#include "codec2.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <math.h>
 #include "portaudio.h"
-#include "codec2.h"
 /*
 ** Note that many of the older ISA sound cards on PCs do NOT support
 ** full duplex audio (simultaneous record and playback).
@@ -9,15 +12,19 @@
 */
 #define SAMPLE_RATE         (8000)
 #define PA_SAMPLE_TYPE      paFloat32
-#define FRAMES_PER_BUFFER   (64)
+#define FRAMES_PER_BUFFER   (256)
 
 typedef float SAMPLE;
 
-static int fuzzCallback( const void *inputBuffer, void *outputBuffer,
-                         unsigned long framesPerBuffer,
-                         const PaStreamCallbackTimeInfo* timeInfo,
-                         PaStreamCallbackFlags statusFlags,
-                         void *userData );
+typedef struct
+{
+  void          *codec2;
+  int           nsam; // number of samples
+  int           nbit; // number of bits
+  int           nbyte;// number of bytes
+  short         *buf;
+}
+paTestData;
 
 static int fuzzCallback( const void *inputBuffer, void *outputBuffer,
                          unsigned long framesPerBuffer,
@@ -25,12 +32,15 @@ static int fuzzCallback( const void *inputBuffer, void *outputBuffer,
                          PaStreamCallbackFlags statusFlags,
                          void *userData )
 {
+    paTestData *data = (paTestData*)userData;
     SAMPLE *out = (SAMPLE*)outputBuffer;
     const SAMPLE *in = (const SAMPLE*)inputBuffer;
-    unsigned int i;
+    int i;
     (void) timeInfo; /* Prevent unused variable warnings. */
     (void) statusFlags;
     (void) userData;
+    // Goal here is to take the buffer and run it through
+    // encoding and decoding.  See how long this takes...
 
     if( inputBuffer == NULL )
     {
@@ -51,15 +61,36 @@ static int fuzzCallback( const void *inputBuffer, void *outputBuffer,
 }
 
 /*******************************************************************/
-int main(void);
 int main(void)
 {
     PaStreamParameters inputParameters, outputParameters;
     PaStream *stream;
     PaError err;
+    paTestData data;
 
     err = Pa_Initialize();
     if( err != paNoError ) goto error;
+
+
+    /* create a pointer to the codec states */
+    data.codec2 = codec2_create(CODEC2_MODE_1200);
+
+    /* calculate the number of samples per frame */
+    data.nsam = codec2_samples_per_frame(data.codec2);
+    printf("number of samples per frame: %d\n", data.nsam);
+
+    /* calculate the number of bits per frame */
+    data.nbit = codec2_bits_per_frame(data.codec2);
+    printf("number of bits: %d\n", data.nbit);
+
+    /* calculate the number of bytes */
+    data.nbyte = (data.nbit + 7) / 8;
+    printf("number of bytes: %d\n", data.nbyte);
+
+    int nshortsamples = data.nsam * sizeof(short);
+    data.buf = malloc ( nshortsamples );
+    int i;
+    for (i = 0; i < data.nsam; i++) { data.buf[i] = 0; }
 
     inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {
@@ -89,7 +120,7 @@ int main(void)
               FRAMES_PER_BUFFER,
               0, /* paClipOff, */  /* we won't output out of range samples so don't bother clipping them */
               fuzzCallback,
-              NULL );
+              &data );
     if( err != paNoError ) goto error;
 
     err = Pa_StartStream( stream );
@@ -100,12 +131,15 @@ int main(void)
     err = Pa_CloseStream( stream );
     if( err != paNoError ) goto error;
 
-    printf("Finished.");
+    printf("Finished.\n");
     Pa_Terminate();
+    free(data.buf);
+    codec2_destroy(data.codec2);
     return 0;
 
 error:
     Pa_Terminate();
+    codec2_destroy(data.codec2);
     fprintf( stderr, "An error occured while using the portaudio stream\n" );
     fprintf( stderr, "Error number: %d\n", err );
     fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
