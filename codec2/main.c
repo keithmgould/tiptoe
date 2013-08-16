@@ -11,7 +11,7 @@
 ** And some only support full duplex at lower sample rates.
 */
 #define SAMPLE_RATE         (8000)
-#define PA_SAMPLE_TYPE      paFloat32
+#define PA_SAMPLE_TYPE      paInt16
 #define FRAMES_PER_BUFFER   (256)
 
 typedef float SAMPLE;
@@ -47,12 +47,14 @@ static int fuzzCallback( const void *inputBuffer, void *outputBuffer,
         for( i=0; i<framesPerBuffer; i++ )
         {
             *out++ = 0;
+            *out++ = 0;
         }
     }
     else
     {
         for( i=0; i<framesPerBuffer; i++ )
         {
+            *out++ = *in++ * 2;
             *out++ = *in++ * 2;
         }
     }
@@ -97,7 +99,7 @@ int main(void)
       fprintf(stderr,"Error: No default input device.\n");
       goto error;
     }
-    inputParameters.channelCount = 1;       /* mono input */
+    inputParameters.channelCount = 2;
     inputParameters.sampleFormat = PA_SAMPLE_TYPE;
     inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultLowInputLatency;
     inputParameters.hostApiSpecificStreamInfo = NULL;
@@ -107,7 +109,7 @@ int main(void)
       fprintf(stderr,"Error: No default output device.\n");
       goto error;
     }
-    outputParameters.channelCount = 1;       /* mono output */
+    outputParameters.channelCount = 2;
     outputParameters.sampleFormat = PA_SAMPLE_TYPE;
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
@@ -133,13 +135,14 @@ int main(void)
 
     printf("Finished.\n");
     Pa_Terminate();
-    free(data.buf);
     codec2_destroy(data.codec2);
+    free(data.buf);
     return 0;
 
 error:
     Pa_Terminate();
     codec2_destroy(data.codec2);
+    free(data.buf);
     fprintf( stderr, "An error occured while using the portaudio stream\n" );
     fprintf( stderr, "Error number: %d\n", err );
     fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
