@@ -14,7 +14,7 @@
 #define PA_SAMPLE_TYPE      paInt16
 #define FRAMES_PER_BUFFER   (256)
 
-typedef float SAMPLE;
+typedef short SAMPLE;
 
 typedef struct
 {
