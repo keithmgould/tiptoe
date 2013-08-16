@@ -12,7 +12,7 @@
 */
 #define SAMPLE_RATE         (8000)
 #define PA_SAMPLE_TYPE      paInt16
-#define FRAMES_PER_BUFFER   (256)
+#define FRAMES_PER_BUFFER   (320)
 
 typedef short SAMPLE;
 
@@ -23,6 +23,7 @@ typedef struct
   int           nbit; // number of bits
   int           nbyte;// number of bytes
   short         *buf;
+  unsigned char *bits;
 }
 paTestData;
 
@@ -39,8 +40,8 @@ static int fuzzCallback( const void *inputBuffer, void *outputBuffer,
     (void) timeInfo; /* Prevent unused variable warnings. */
     (void) statusFlags;
     (void) userData;
-    // Goal here is to take the buffer and run it through
-    // encoding and decoding.  See how long this takes...
+
+    short monoBuffer[FRAMES_PER_BUFFER];
 
     if( inputBuffer == NULL )
     {
@@ -54,8 +55,16 @@ static int fuzzCallback( const void *inputBuffer, void *outputBuffer,
     {
         for( i=0; i<framesPerBuffer; i++ )
         {
-            *out++ = *in++ * 2;
-            *out++ = *in++ * 2;
+          monoBuffer[i] = *in++;
+          *in++;
+        }
+        codec2_encode(data->codec2, data->bits, monoBuffer);
+        codec2_decode(data->codec2, monoBuffer, data->bits);
+
+        for( i=0; i<framesPerBuffer; i++ )
+        {
+            *out++ = monoBuffer[i] * 2;
+            *out++ = 0;
         }
     }
 
@@ -89,10 +98,12 @@ int main(void)
     data.nbyte = (data.nbit + 7) / 8;
     printf("number of bytes: %d\n", data.nbyte);
 
-    int nshortsamples = data.nsam * sizeof(short);
-    data.buf = malloc ( nshortsamples );
+    data.buf = malloc ( data.nsam * sizeof(short) );
+    data.bits = malloc (data.nbit * sizeof(char) );
+
     int i;
     for (i = 0; i < data.nsam; i++) { data.buf[i] = 0; }
+    for (i = 0; i < data.nbit; i++) { data.bits[i] = 0; }
 
     inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {
@@ -135,14 +146,16 @@ int main(void)
 
     printf("Finished.\n");
     Pa_Terminate();
-    codec2_destroy(data.codec2);
     free(data.buf);
+    free(data.bits);
+    codec2_destroy(data.codec2);
     return 0;
 
 error:
     Pa_Terminate();
-    codec2_destroy(data.codec2);
     free(data.buf);
+    free(data.bits);
+    codec2_destroy(data.codec2);
     fprintf( stderr, "An error occured while using the portaudio stream\n" );
     fprintf( stderr, "Error number: %d\n", err );
     fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
