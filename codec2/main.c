@@ -77,22 +77,15 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
     for( i=0; i<framesPerBuffer; i++ )
     {
       *out++ = 0;
-      *out++ = 0;
     }
   }
   else
   {
-    for( i=0; i<framesPerBuffer; i++ )
-    {
-      monoBuffer[i] = *in++;
-      *in++;
-    }
-    codec2_encode(data->codec2, data->bits, monoBuffer);
+    codec2_encode(data->codec2, data->bits, in);
     codec2_decode(data->codec2, monoBuffer, data->bits);
 
     for( i=0; i<framesPerBuffer; i++ )
     {
-      *out++ = monoBuffer[i] * 2;
       *out++ = monoBuffer[i] * 2;
     }
   }
@@ -127,7 +120,7 @@ int main(void)
     fprintf(stderr,"Error: No default input device.\n");
     goto error;
   }
-  inputParameters.channelCount = 2;
+  inputParameters.channelCount = 1;
   inputParameters.sampleFormat = PA_SAMPLE_TYPE;
   inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultLowInputLatency;
   inputParameters.hostApiSpecificStreamInfo = NULL;
@@ -137,7 +130,7 @@ int main(void)
     fprintf(stderr,"Error: No default output device.\n");
     goto error;
   }
-  outputParameters.channelCount = 2;
+  outputParameters.channelCount = 1;
   outputParameters.sampleFormat = PA_SAMPLE_TYPE;
   outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL;
