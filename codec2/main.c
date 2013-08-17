@@ -40,8 +40,6 @@ typedef short SAMPLE;
 typedef struct
 {
   void          *codec2;
-  int           nsam;       // number of samples
-  int           nbit;       // number of bits
   unsigned char *bits;
 }
 callbackData;
@@ -117,12 +115,12 @@ int main(void)
   data.codec2 = codec2_create(CODEC2_MODE);
 
   /* determine the number of bits per frame */
-  data.nbit = codec2_bits_per_frame(data.codec2);
+  int nbit = codec2_bits_per_frame(data.codec2);
 
   /* allocate and clean space needed to store the compressed audio */
-  data.bits = malloc (data.nbit * sizeof(char) );
+  data.bits = malloc (nbit * sizeof(char) );
   int i;
-  for (i = 0; i < data.nbit; i++) { data.bits[i] = 0; }
+  for (i = 0; i < nbit; i++) { data.bits[i] = 0; }
 
   inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
   if (inputParameters.device == paNoDevice) {
