@@ -64,7 +64,7 @@ static int fuzzCallback( const void *inputBuffer, void *outputBuffer,
         for( i=0; i<framesPerBuffer; i++ )
         {
             *out++ = monoBuffer[i] * 2;
-            *out++ = 0;
+            *out++ = monoBuffer[i] * 2;
         }
     }
 
