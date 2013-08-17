@@ -15,16 +15,17 @@
 #define SAMPLE_RATE         (8000)
 
 /*----------------------------------------------------------------
- * The FRAMES_PER_BUFFER and CODEC2_MODE constansts are correlated.
+ * The FRAMES_PER_BUFFER and CODEC2_MODE constants are correlated.
  * See codec2.c in the codec2 repo to learn more.  In short, do not
  * change one without learning how to change the other.
 */
-#define FRAMES_PER_BUFFER   (320)
 #define CODEC2_MODE         (CODEC2_MODE_1200)
+#define FRAMES_PER_BUFFER   (320)
 
 /*----------------------------------------------------------------
- * The sample type and SAMPLE typedef are correlated.  If we were to
- * use paFloat32 for example, the SAMPLE type would be float.
+ * The port audio sample type and SAMPLE typedef are correlated.
+ * If we were to use paFloat32 for example, the SAMPLE type would
+ * be float.
  */
 #define PA_SAMPLE_TYPE      paInt16
 typedef short SAMPLE;
@@ -32,9 +33,8 @@ typedef short SAMPLE;
 
 /*----------------------------------------------------------------
  * callbackData contains any information needed to persist between
- * callbacks.  Right now this is just information, not because there
- * is data needed between callbacks, but so that we don't have to
- * initialize codec2 or its arrays repeatedly.
+ * callbacks. We use it so that we don't have to initialize codec2
+ * or its arrays repeatedly.
  */
 typedef struct
 {
@@ -63,117 +63,117 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
                          PaStreamCallbackFlags statusFlags,
                          void *userData )
 {
-    callbackData *data = (callbackData*)userData;
-    SAMPLE *out = (SAMPLE*)outputBuffer;
-    const SAMPLE *in = (const SAMPLE*)inputBuffer;
-    int i;
-    (void) timeInfo; /* Prevent unused variable warnings. */
-    (void) statusFlags;
-    (void) userData;
+  callbackData *data = (callbackData*)userData;
+  SAMPLE *out = (SAMPLE*)outputBuffer;
+  const SAMPLE *in = (const SAMPLE*)inputBuffer;
+  int i;
+  (void) timeInfo; /* Prevent unused variable warnings. */
+  (void) statusFlags;
+  (void) userData;
 
-    short monoBuffer[FRAMES_PER_BUFFER];
+  short monoBuffer[FRAMES_PER_BUFFER];
 
-    if( inputBuffer == NULL )
+  if( inputBuffer == NULL )
+  {
+    for( i=0; i<framesPerBuffer; i++ )
     {
-        for( i=0; i<framesPerBuffer; i++ )
-        {
-            *out++ = 0;
-            *out++ = 0;
-        }
+      *out++ = 0;
+      *out++ = 0;
     }
-    else
+  }
+  else
+  {
+    for( i=0; i<framesPerBuffer; i++ )
     {
-        for( i=0; i<framesPerBuffer; i++ )
-        {
-          monoBuffer[i] = *in++;
-          *in++;
-        }
-        codec2_encode(data->codec2, data->bits, monoBuffer);
-        codec2_decode(data->codec2, monoBuffer, data->bits);
-
-        for( i=0; i<framesPerBuffer; i++ )
-        {
-            *out++ = monoBuffer[i] * 2;
-            *out++ = monoBuffer[i] * 2;
-        }
+      monoBuffer[i] = *in++;
+      *in++;
     }
+    codec2_encode(data->codec2, data->bits, monoBuffer);
+    codec2_decode(data->codec2, monoBuffer, data->bits);
 
-    return paContinue;
+    for( i=0; i<framesPerBuffer; i++ )
+    {
+      *out++ = monoBuffer[i] * 2;
+      *out++ = monoBuffer[i] * 2;
+    }
+  }
+
+  return paContinue;
 }
 
 /*******************************************************************/
 int main(void)
 {
-    PaStreamParameters inputParameters, outputParameters;
-    PaStream *stream;
-    PaError err;
-    callbackData data;
+  PaStreamParameters inputParameters, outputParameters;
+  PaStream *stream;
+  PaError err;
+  callbackData data;
 
-    err = Pa_Initialize();
-    if( err != paNoError ) goto error;
+  err = Pa_Initialize();
+  if( err != paNoError ) goto error;
 
-    /* create a pointer to the codec states */
-    data.codec2 = codec2_create(CODEC2_MODE);
+  /* create a pointer to the codec states */
+  data.codec2 = codec2_create(CODEC2_MODE);
 
-    /* determine the number of bits per frame */
-    data.nbit = codec2_bits_per_frame(data.codec2);
+  /* determine the number of bits per frame */
+  data.nbit = codec2_bits_per_frame(data.codec2);
 
-    /* allocate and clean space needed to store the compressed audio */
-    data.bits = malloc (data.nbit * sizeof(char) );
-    int i;
-    for (i = 0; i < data.nbit; i++) { data.bits[i] = 0; }
+  /* allocate and clean space needed to store the compressed audio */
+  data.bits = malloc (data.nbit * sizeof(char) );
+  int i;
+  for (i = 0; i < data.nbit; i++) { data.bits[i] = 0; }
 
-    inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
-    if (inputParameters.device == paNoDevice) {
-      fprintf(stderr,"Error: No default input device.\n");
-      goto error;
-    }
-    inputParameters.channelCount = 2;
-    inputParameters.sampleFormat = PA_SAMPLE_TYPE;
-    inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultLowInputLatency;
-    inputParameters.hostApiSpecificStreamInfo = NULL;
+  inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
+  if (inputParameters.device == paNoDevice) {
+    fprintf(stderr,"Error: No default input device.\n");
+    goto error;
+  }
+  inputParameters.channelCount = 2;
+  inputParameters.sampleFormat = PA_SAMPLE_TYPE;
+  inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultLowInputLatency;
+  inputParameters.hostApiSpecificStreamInfo = NULL;
 
-    outputParameters.device = Pa_GetDefaultOutputDevice(); /* default output device */
-    if (outputParameters.device == paNoDevice) {
-      fprintf(stderr,"Error: No default output device.\n");
-      goto error;
-    }
-    outputParameters.channelCount = 2;
-    outputParameters.sampleFormat = PA_SAMPLE_TYPE;
-    outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
-    outputParameters.hostApiSpecificStreamInfo = NULL;
+  outputParameters.device = Pa_GetDefaultOutputDevice(); /* default output device */
+  if (outputParameters.device == paNoDevice) {
+    fprintf(stderr,"Error: No default output device.\n");
+    goto error;
+  }
+  outputParameters.channelCount = 2;
+  outputParameters.sampleFormat = PA_SAMPLE_TYPE;
+  outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
+  outputParameters.hostApiSpecificStreamInfo = NULL;
 
-    err = Pa_OpenStream(
-              &stream,
-              &inputParameters,
-              &outputParameters,
-              SAMPLE_RATE,
-              FRAMES_PER_BUFFER,
-              0, /* paClipOff, */  /* we won't output out of range samples so don't bother clipping them */
-              localToRemoteCallback,
-              &data );
-    if( err != paNoError ) goto error;
+  err = Pa_OpenStream(
+      &stream,
+      &inputParameters,
+      &outputParameters,
+      SAMPLE_RATE,
+      FRAMES_PER_BUFFER,
+      0, /* paClipOff, */  /* we won't output out of range samples so don't bother clipping them */
+      localToRemoteCallback,
+      &data );
+  if( err != paNoError ) goto error;
 
-    err = Pa_StartStream( stream );
-    if( err != paNoError ) goto error;
+  err = Pa_StartStream( stream );
+  if( err != paNoError ) goto error;
 
-    printf("Hit ENTER to stop program.\n");
-    getchar();
-    err = Pa_CloseStream( stream );
-    if( err != paNoError ) goto error;
+  printf("Hit ENTER to stop program.\n");
+  getchar();
+  err = Pa_CloseStream( stream );
+  if( err != paNoError ) goto error;
 
-    printf("Finished.\n");
-    Pa_Terminate();
-    free(data.bits);
-    codec2_destroy(data.codec2);
-    return 0;
+  printf("Finished.\n");
+  Pa_Terminate();
+  free(data.bits);
+  codec2_destroy(data.codec2);
+  return 0;
 
 error:
-    Pa_Terminate();
-    free(data.bits);
-    codec2_destroy(data.codec2);
-    fprintf( stderr, "An error occured while using the portaudio stream\n" );
-    fprintf( stderr, "Error number: %d\n", err );
-    fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
-    return -1;
+  Pa_Terminate();
+  free(data.bits);
+  codec2_destroy(data.codec2);
+  fprintf( stderr, "An error occured while using the portaudio stream\n" );
+  fprintf( stderr, "Error number: %d\n", err );
+  fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
+  return -1;
 }
