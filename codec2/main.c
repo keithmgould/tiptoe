@@ -64,7 +64,7 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
 {
   callbackData *data = (callbackData*)userData;
   SAMPLE *out = (SAMPLE*)outputBuffer;
-  const SAMPLE *in = (const SAMPLE*)inputBuffer;
+  SAMPLE *in = (SAMPLE*)inputBuffer;
   int i;
   (void) timeInfo; /* Prevent unused variable warnings. */
   (void) statusFlags;
@@ -82,12 +82,7 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
   else
   {
     codec2_encode(data->codec2, data->bits, in);
-    codec2_decode(data->codec2, monoBuffer, data->bits);
-
-    for( i=0; i<framesPerBuffer; i++ )
-    {
-      *out++ = monoBuffer[i] * 2;
-    }
+    codec2_decode(data->codec2, out, data->bits);
   }
 
   return paContinue;
@@ -112,8 +107,6 @@ int main(void)
 
   /* allocate and clean space needed to store the compressed audio */
   data.bits = malloc (nbit * sizeof(char) );
-  int i;
-  for (i = 0; i < nbit; i++) { data.bits[i] = 0; }
 
   inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
   if (inputParameters.device == paNoDevice) {
