@@ -15,6 +15,10 @@
  * The FRAMES_PER_BUFFER and CODEC2_MODE constants are correlated.
  * See codec2.c in the codec2 repo to learn more.  In short, do not
  * change one without learning how to change the other.
+ * mode_1200: 320
+ * mode_1400: 320
+ * mode_2400: 160
+ * mode_3200: 160
 */
 #define CODEC2_MODE         (CODEC2_MODE_1200)
 #define FRAMES_PER_BUFFER   (320)
