@@ -14,8 +14,8 @@
 #include "portaudio.h"
 #include "transcode.cpp"
 
-#define SAMPLE_RATE   (6000)
-#define FRAMES_PER_BUFFER  (512)
+#define SAMPLE_RATE   (8000)
+#define FRAMES_PER_BUFFER  (320)
 
 #ifndef M_PI
 #define M_PI  (3.14159265)
@@ -30,17 +30,18 @@ using namespace std;
 #define BASE (1)
 #define HIGH (2)
 
+typedef short SAMPLE;
+
 typedef struct
 {
-    float base_sine[BASE_TABLE_SIZE];
-    float high_sine[HIGH_TABLE_SIZE];
-    float low_sine[LOW_TABLE_SIZE];
+    SAMPLE base_sine[BASE_TABLE_SIZE];
+    SAMPLE high_sine[HIGH_TABLE_SIZE];
+    SAMPLE low_sine[LOW_TABLE_SIZE];
     int mode;                           // The frequency we are on: base, high or low
     int phase;                          // Where in the sinusoid we are
 }
 transmitData;
 
-// SO DUH: Sample output must equal sample input count.
 static int transmitCallback( const void *inputBuffer, void *outputBuffer,
                             unsigned long framesPerBuffer,
                             const PaStreamCallbackTimeInfo* timeInfo,
@@ -48,7 +49,7 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
                             void *userData )
 {
     transmitData *data = (transmitData*)userData;
-    float *out = (float*)outputBuffer;
+    SAMPLE *out = (SAMPLE*)outputBuffer;
 
     (void) timeInfo; /* Prevent unused variable warnings. */
     (void) statusFlags;
@@ -60,19 +61,10 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
     faux.push_back ( 0x00 );
     faux.push_back ( 0xFF );
     faux.push_back ( 0xEE );
-    faux.push_back ( 0xA5 );
-    faux.push_back ( 0xB2 );
-    faux.push_back ( 0xDD );
 
     vector<bool> transcodedBits;
     Transcode::Perform(faux, transcodedBits);
     vector<bool>::iterator bitIterator = transcodedBits.begin();
-    cout << endl;
-    for(bitIterator; bitIterator != transcodedBits.end(); bitIterator++)
-    {
-      cout << *bitIterator;
-    }
-    cout << endl;
     bitIterator = transcodedBits.begin();
     bool nextSinusoid = false;
     for( int i=0; i<framesPerBuffer; i++ )
@@ -92,12 +84,12 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
         }
         if(nextSinusoid)
         {
+          nextSinusoid = false;
           if(bitIterator >= transcodedBits.end())
           {
-            cout <<  endl << "all out of bits yo" << endl;
+            cout <<  endl << "Something is wrong: The bitIterator is beyond the array." << endl;
             return 1;
           }
-          nextSinusoid = false;
           data->phase = 0;
           if(bitIterator == transcodedBits.begin())
           {
@@ -109,7 +101,6 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
           }else{
             data->mode -= 1;
           }
-          cout << *bitIterator << ":" << data->mode << ",";
           if(data->mode > 2 || data->mode < 0)
           {
             cout << endl << "data-> mode is out of range.  It is now: " << data->mode << endl;
@@ -131,20 +122,20 @@ int main(void)
     transmitData data;
     int i;
 
-    /* initialise sinusoidal wavetable */
+    /* initialise sinusoidal wavetables */
     for( i=0; i<BASE_TABLE_SIZE; i++ )
     {
-        data.base_sine[i] = (float) cos( ((double)i/(double)BASE_TABLE_SIZE) * M_PI * 2.0);
+        data.base_sine[i] = (SAMPLE) (cos( ((double)i/(double)BASE_TABLE_SIZE) * M_PI * 2.0) * 32767);
     }
 
     for( i=0; i<HIGH_TABLE_SIZE; i++ )
     {
-        data.high_sine[i] = (float) cos( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0);
+        data.high_sine[i] = (SAMPLE) (cos( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0) * 32767);
     }
 
     for( i=0; i<LOW_TABLE_SIZE; i++ )
     {
-        data.low_sine[i] = (float) cos( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0);
+        data.low_sine[i] = (SAMPLE) (cos( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
     }
 
     data.phase = 0;
@@ -153,13 +144,13 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto error;
 
-    outputParameters.device =2; // Pa_GetDefaultOutputDevice(); /* default output device */
+    outputParameters.device =3; // Pa_GetDefaultOutputDevice(); /* default output device */
     if (outputParameters.device == paNoDevice) {
       fprintf(stderr,"Error: No default output device.\n");
       goto error;
     }
     outputParameters.channelCount = 1;       /* mono output */
-    outputParameters.sampleFormat = paFloat32; /* 32 bit floating point output */
+    outputParameters.sampleFormat = paInt16;
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
 
