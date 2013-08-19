@@ -23,13 +23,17 @@
 
 using namespace std;
 
+#define VSLOW_TABLE_SIZE    (6) // 1.0kHz
+#define SLOW_TABLE_SIZE    (5) // 1.2kHz
 #define LOW_TABLE_SIZE    (4) // 1.5kHz
 #define BASE_TABLE_SIZE   (3) // 3kHz
 #define HIGH_TABLE_SIZE   (2) // 4kHz
-#define ZERO (0)
-#define LOW  (1)
-#define BASE (2)
-#define HIGH (3)
+#define ZERO  (0)
+#define HIGH  (1)
+#define BASE  (2)
+#define LOW   (3)
+#define SLOW  (4)
+#define VSLOW (5)
 
 typedef short SAMPLE;
 
@@ -38,6 +42,8 @@ typedef struct
   SAMPLE base_sine[BASE_TABLE_SIZE];
   SAMPLE high_sine[HIGH_TABLE_SIZE];
   SAMPLE low_sine[LOW_TABLE_SIZE];
+  SAMPLE slow_sine[SLOW_TABLE_SIZE];
+  SAMPLE vslow_sine[VSLOW_TABLE_SIZE];
 }
 transmitData;
 
@@ -73,9 +79,11 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
   bool nextSinusoid = true;
   int phase = 0;
 
-  printf("transcoded bit count: %d\n", (int) transcodedBits.size());
   int mode = BASE;
   int totalFrames = 0;
+  int lowCount = 0;
+  int highCount = 0;
+  int baseCount = 0;
   for(;bitIterator != transcodedBits.end(); bitIterator++)
   {
     if(*bitIterator == 1)
@@ -85,34 +93,29 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
       mode -= 1;
     }
     //--------------------------------
-    if(mode == 0)
+    if(mode == LOW)
     {
+      lowCount += 1;
       totalFrames += LOW_TABLE_SIZE;
-    }else if(mode == 1)
+    }else if(mode == BASE)
     {
+      baseCount += 1;
       totalFrames += BASE_TABLE_SIZE;
-    }else{
+    }else if(mode == HIGH){
+      highCount += 1;
       totalFrames += HIGH_TABLE_SIZE;
-    }
-    //--------------------------------
-    if(mode > HIGH || mode < LOW)
-    {
+    }else{
       cout << endl << "mode is out of range.  It is now: " << mode << endl;
       return 1;
     }
   }
-  printf("totalFrames: %d\n", totalFrames);
+  // printf("transcoded bit count: %d\n", (int) transcodedBits.size());
+  // printf("totalFrames: %d\n", totalFrames);
+  // printf("lowCount: %d\n", lowCount);
+  // printf("baseCount: %d\n", baseCount);
+  // printf("highCount: %d\n", highCount);
   int neededFrames =  FRAMES_PER_BUFFER - totalFrames;
-  printf("neededFrames: %d\n", neededFrames);
-
-  short fillFrames[FRAMES_PER_BUFFER];
-
-  for( i=0; i< neededFrames; i++ )
-  {
-    fillFrames[i] = (SAMPLE) (cos( ((double)i/(double)neededFrames) * M_PI * 2.0) * 32767);
-  }
-
-  bool filledYet = false;
+  // printf("neededFrames: %d\n", neededFrames);
 
   bitIterator = transcodedBits.begin();
   mode = BASE; // reset
@@ -127,7 +130,7 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
       phase = 0;
       if(bitIterator > transcodedBits.end())
       {
-        mode = ZERO;
+        mode = ZERO; // this should never happen
       }else{
         if (bitIterator == transcodedBits.begin())
         {
@@ -139,16 +142,17 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
         }else{
           mode -= 1;
         }
-        if(mode == LOW && filledYet == false)
+        // replace the low table with the super low table
+        if(mode == LOW)
         {
-          filledYet = true;
-          // replace the low table with the super low table
-        }
-        if(mode > 5 || mode < ZERO)
-        {
-          cout << endl << "data-> mode is out of range.  It is now: " << mode << endl;
-          cout << "occurred at: " << i << endl;
-          return 1;
+          if(neededFrames >= 2)
+          {
+            neededFrames -= 2;
+            mode = VSLOW;
+          }else if(neededFrames == 1){
+            neededFrames -= 1;
+            mode = SLOW;
+          }
         }
         bitIterator += 1;
       }
@@ -167,8 +171,26 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
       *out++ = data->low_sine[phase];
       phase += 1;
       if(phase >= LOW_TABLE_SIZE) { nextSinusoid = true;}
+    }else if(mode == SLOW){
+      *out++ = data->slow_sine[phase];
+      phase += 1;
+      if(phase >= SLOW_TABLE_SIZE)
+      {
+        nextSinusoid = true;
+        mode = LOW;
+      }
+    }else if(mode == VSLOW){
+      *out++ = data->vslow_sine[phase];
+      phase += 1;
+      if(phase >= VSLOW_TABLE_SIZE)
+      {
+        nextSinusoid = true;
+        mode = LOW;
+      }
+
     }else{
-      *out++ = 0;
+      printf("we got to a bad place sir.\n");
+      return 1;
     }
   }
   return paContinue;
@@ -199,6 +221,15 @@ int main(void)
     data.low_sine[i] = (SAMPLE) (cos( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
 
+  for( i=0; i<SLOW_TABLE_SIZE; i++ )
+  {
+    data.slow_sine[i] = (SAMPLE) (cos( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
+  }
+
+  for( i=0; i<VSLOW_TABLE_SIZE; i++ )
+  {
+    data.vslow_sine[i] = (SAMPLE) (cos( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
+  }
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
