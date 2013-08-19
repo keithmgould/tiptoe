@@ -63,7 +63,6 @@ void demodulator(const void * inputBuffer, paTestData * data)
   float * floatInputBuffer = (float *) inputBuffer;
   int localMaximumPosition;
   int distanceBetweenPeaks;
-  bool goingDown = false;
   for(int i=1; i<FRAMES_PER_BUFFER;i++)
   {
     if(floatInputBuffer[i] >= floatInputBuffer[i-1])
@@ -169,7 +168,7 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto done;
 
-    inputParameters.device = 2; //Pa_GetDefaultInputDevice(); /* default input device */
+    inputParameters.device = 3; //Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {
         fprintf(stderr,"Error: No default input device.\n");
         goto done;
@@ -234,6 +233,7 @@ int main(void)
         }
         else
         {
+            // based on 0x00 0xFF 0x5D ->  010101010101010110101010101010100110011010100110
             fwrite( data.recordedSamples, sizeof(SAMPLE), numSamples, fid );
             fclose( fid );
             printf("Wrote data to 'recorded.raw'\n");
