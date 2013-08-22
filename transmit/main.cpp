@@ -70,15 +70,15 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
   faux.push_back ( 0x2D );
   faux.push_back ( 0xBC );
   faux.push_back ( 0x94 );
-
+  // transcoded:
+  // 101001100101101010011001100101100110011010100110010110011010011010011010101001011001011001100101
 
   vector<bool> transcodedBits;
   Transcode::Perform(faux, transcodedBits);
   vector<bool>::iterator bitIterator = transcodedBits.begin();
-  bitIterator = transcodedBits.begin();
+
   bool nextSinusoid = true;
   int phase = 0;
-
   int mode = BASE;
   int totalFrames = 0;
   int lowCount = 0;
