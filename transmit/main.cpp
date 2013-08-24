@@ -12,7 +12,7 @@
 #include <bitset>
 #include <math.h>
 #include "portaudio.h"
-#include "transcode.cpp"
+#include "../utilities/transcode.cpp"
 
 #define SAMPLE_RATE   (32000) // 8000 * 4
 #define FRAMES_PER_BUFFER  (1280) // 320 * 4
