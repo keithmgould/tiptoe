@@ -55,7 +55,6 @@ typedef struct
 }
 callbackData;
 
-
 /*----------------------------------------------------------------
  * localToRemoteCallback is called everytime the buffer is full.
  *
