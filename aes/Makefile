@@ -3,10 +3,10 @@ INCLUDE = /Users/keith/Documents/business/crypto/portaudio/include/
 LIB = /Users/keith/Documents/business/crypto/portaudio/lib/.libs/
 RM = rm
 
-all: tiptoe
+all: main
 
-tiptoe: tiptoe.cpp
-	$(CXX) -o tiptoe tiptoe.cpp -I$(INCLUDE) -L$(LIB) -lportaudio -lcryptopp
+main: main.cpp
+	$(CXX) -o main main.cpp -I$(INCLUDE) -L$(LIB) -lportaudio -lcryptopp
 
 clean:
-	rm ./tiptoe
+	rm ./main
