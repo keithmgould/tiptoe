@@ -12,7 +12,6 @@
 #include <bitset>
 #include <math.h>
 #include "portaudio.h"
-#include "transcode.cpp"
 
 #define SAMPLE_RATE   (32000) // 8000 * 4
 #define FRAMES_PER_BUFFER  (1280) // 320 * 4
@@ -23,21 +22,15 @@
 
 using namespace std;
 
-#define LOW_TABLE_SIZE    (13)
-#define BASE_TABLE_SIZE   (12)
-#define HIGH_TABLE_SIZE   (11)
-#define ZERO  (0)
-#define HIGH  (1)
-#define BASE  (2)
-#define LOW   (3)
-#define SLOW  (4)
-#define VSLOW (5)
+#define LOW_TABLE_SIZE    (11)
+#define HIGH_TABLE_SIZE   (9)
+#define HIGH  (0)
+#define LOW   (1)
 
 typedef short SAMPLE;
 
 typedef struct
 {
-  SAMPLE base_sine[BASE_TABLE_SIZE];
   SAMPLE high_sine[HIGH_TABLE_SIZE];
   SAMPLE low_sine[LOW_TABLE_SIZE];
 }
@@ -56,65 +49,9 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
   (void) statusFlags;
   (void) inputBuffer;
 
-  // faux input -- some random bytes
-  vector<unsigned char> faux;
-
-  // 48 bits will come from Codec2...
-  faux.push_back ( 0xD3 );
-  faux.push_back ( 0xA9 );
-  faux.push_back ( 0x5D );
-  faux.push_back ( 0x2D );
-  faux.push_back ( 0xBC );
-  faux.push_back ( 0x94 );
-  // transcoded:
-  // 101001100101101010011001100101100110011010100110010110011010011010011010101001011001011001100101
-
-  vector<bool> transcodedBits;
-  Transcode::Perform(faux, transcodedBits);
-  vector<bool>::iterator bitIterator = transcodedBits.begin();
-
   bool nextSinusoid = true;
   int phase = 0;
-  int mode = BASE;
-  int totalFrames = 0;
-  int lowCount = 0;
-  int highCount = 0;
-  int baseCount = 0;
-  for(;bitIterator != transcodedBits.end(); bitIterator++)
-  {
-    if(*bitIterator == 1)
-    {
-      mode += 1;
-    }else{
-      mode -= 1;
-    }
-    //--------------------------------
-    if(mode == LOW)
-    {
-      lowCount += 1;
-      totalFrames += LOW_TABLE_SIZE;
-    }else if(mode == BASE)
-    {
-      baseCount += 1;
-      totalFrames += BASE_TABLE_SIZE;
-    }else if(mode == HIGH){
-      highCount += 1;
-      totalFrames += HIGH_TABLE_SIZE;
-    }else{
-      cout << endl << "mode is out of range.  It is now: " << mode << endl;
-      return 1;
-    }
-  }
-  int neededFrames =  FRAMES_PER_BUFFER - totalFrames;
-  // printf("transcoded bit count (should always be 96): %d\n", (int) transcodedBits.size());
-  // printf("totalFrames: %d\n", totalFrames);
-  // printf("lowCount: %d\n", lowCount);
-  // printf("baseCount: %d\n", baseCount);
-  // printf("highCount: %d\n", highCount);
-  // printf("neededFrames: %d\n", neededFrames);
-
-  bitIterator = transcodedBits.begin();
-  mode = BASE; // reset
+  int mode = LOW;
 
   for( int i=0; i<framesPerBuffer; i++ )
   {
@@ -124,26 +61,10 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
     {
       nextSinusoid = false;
       phase = 0;
-      if (bitIterator == transcodedBits.begin())
-      {
-        mode = BASE;
-      }
-
-      if(bitIterator > transcodedBits.end())
-      {
-        if(mode == HIGH){
-          mode = BASE;
-        }else{
-          mode = HIGH;
-        }
-      } else{
-        if(*bitIterator == 1)
-        {
-          mode += 1;
-        }else{
-          mode -= 1;
-        }
-        bitIterator++;
+      if(mode == HIGH){
+        mode = LOW;
+      }else{
+        mode = HIGH;
       }
     }
     //-----------------------------------------------
@@ -152,10 +73,6 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
       *out++ = data->high_sine[phase];
       phase += 1;
       if(phase >= HIGH_TABLE_SIZE) { nextSinusoid = true;}
-    }else if(mode == BASE){
-      *out++ = data->base_sine[phase];
-      phase += 1;
-      if(phase >= BASE_TABLE_SIZE) { nextSinusoid = true;}
     }else if(mode == LOW){
       *out++ = data->low_sine[phase];
       phase += 1;
@@ -178,11 +95,6 @@ int main(void)
   int i;
 
   /* initialise sinusoidal wavetables */
-  for( i=0; i<BASE_TABLE_SIZE; i++ )
-  {
-    data.base_sine[i] = (SAMPLE) (cos( ((double)i/(double)BASE_TABLE_SIZE) * M_PI * 2.0) * 32767);
-  }
-
   for( i=0; i<HIGH_TABLE_SIZE; i++ )
   {
     data.high_sine[i] = (SAMPLE) (cos( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0) * 32767);

@@ -6,8 +6,8 @@
 #include <iostream>
 #include <fstream>
 
-#define SAMPLE_RATE  (16000)
-#define FRAMES_PER_BUFFER (512)
+#define SAMPLE_RATE  (32000)
+#define FRAMES_PER_BUFFER (1280)
 #define NUM_SECONDS     (1)
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
@@ -149,8 +149,6 @@ int main(void)
     int                 numBytes;
     SAMPLE              max, val;
     double              average;
-
-    printf("patest_record.c\n"); fflush(stdout);
 
     data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;
