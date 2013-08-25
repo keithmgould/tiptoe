@@ -97,12 +97,12 @@ int main(void)
   /* initialise sinusoidal wavetables */
   for( i=0; i<HIGH_TABLE_SIZE; i++ )
   {
-    data.high_sine[i] = (SAMPLE) (cos( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0) * 32767);
+    data.high_sine[i] = (SAMPLE) (sin( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
 
   for( i=0; i<LOW_TABLE_SIZE; i++ )
   {
-    data.low_sine[i] = (SAMPLE) (cos( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
+    data.low_sine[i] = (SAMPLE) (sin( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
 
   err = Pa_Initialize();

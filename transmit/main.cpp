@@ -8,8 +8,6 @@
 #include <iostream>
 #include <csignal>
 #include <fstream>
-#include <vector>
-#include <bitset>
 #include <math.h>
 #include "portaudio.h"
 #include "../utilities/transcode.cpp"
@@ -23,15 +21,14 @@
 
 using namespace std;
 
+#define VLOW_TABLE_SIZE   (14)
 #define LOW_TABLE_SIZE    (13)
 #define BASE_TABLE_SIZE   (12)
 #define HIGH_TABLE_SIZE   (11)
-#define ZERO  (0)
-#define HIGH  (1)
-#define BASE  (2)
+#define VLOW  (4)
 #define LOW   (3)
-#define SLOW  (4)
-#define VSLOW (5)
+#define BASE  (2)
+#define HIGH  (1)
 
 typedef short SAMPLE;
 
@@ -40,6 +37,7 @@ typedef struct
   SAMPLE base_sine[BASE_TABLE_SIZE];
   SAMPLE high_sine[HIGH_TABLE_SIZE];
   SAMPLE low_sine[LOW_TABLE_SIZE];
+  SAMPLE vlow_sine[VLOW_TABLE_SIZE];
 }
 transmitData;
 
@@ -57,32 +55,26 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
   (void) inputBuffer;
 
   // faux input -- some random bytes
-  vector<unsigned char> faux;
-
   // 48 bits will come from Codec2...
-  faux.push_back ( 0xD3 );
-  faux.push_back ( 0xA9 );
-  faux.push_back ( 0x5D );
-  faux.push_back ( 0x2D );
-  faux.push_back ( 0xBC );
-  faux.push_back ( 0x94 );
+  unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 };
   // transcoded:
   // 101001100101101010011001100101100110011010100110010110011010011010011010101001011001011001100101
 
-  vector<bool> transcodedBits;
-  Transcode::Perform(faux, transcodedBits);
-  vector<bool>::iterator bitIterator = transcodedBits.begin();
+  bool transcodedBits[96];
+  Transcode::Perform(faux, transcodedBits, 6);
 
   bool nextSinusoid = true;
+  int preamble = 0;
   int phase = 0;
   int mode = BASE;
   int totalFrames = 0;
   int lowCount = 0;
   int highCount = 0;
   int baseCount = 0;
-  for(;bitIterator != transcodedBits.end(); bitIterator++)
+  int bitIterator = 0;
+  for(bitIterator =0; bitIterator< 96; bitIterator++)
   {
-    if(*bitIterator == 1)
+    if(transcodedBits[bitIterator]== true)
     {
       mode += 1;
     }else{
@@ -105,16 +97,17 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
       return 1;
     }
   }
+
+  // frames for preamble
+  totalFrames += VLOW_TABLE_SIZE + LOW_TABLE_SIZE + (2 * BASE_TABLE_SIZE) + HIGH_TABLE_SIZE;
+
   int neededFrames =  FRAMES_PER_BUFFER - totalFrames;
-  // printf("transcoded bit count (should always be 96): %d\n", (int) transcodedBits.size());
   // printf("totalFrames: %d\n", totalFrames);
   // printf("lowCount: %d\n", lowCount);
   // printf("baseCount: %d\n", baseCount);
   // printf("highCount: %d\n", highCount);
   // printf("neededFrames: %d\n", neededFrames);
-
-  bitIterator = transcodedBits.begin();
-  mode = BASE; // reset
+  bitIterator = 0;
 
   for( int i=0; i<framesPerBuffer; i++ )
   {
@@ -124,26 +117,48 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
     {
       nextSinusoid = false;
       phase = 0;
-      if (bitIterator == transcodedBits.begin())
+      if (preamble <= 4)
       {
-        mode = BASE;
-      }
-
-      if(bitIterator > transcodedBits.end())
-      {
-        if(mode == HIGH){
-          mode = BASE;
-        }else{
-          mode = HIGH;
+        switch (preamble){
+          case 0:
+            // printf("A");
+            mode = VLOW;
+            break;
+          case 1:
+            // printf("B");
+            mode = LOW;
+            break;
+          case 2:
+            // printf("C");
+            mode = BASE;
+            break;
+          case 3:
+            // printf("D");
+            mode = HIGH;
+            break;
+          case 4:
+            // printf("E");
+            mode = BASE;
+            break;
         }
-      } else{
-        if(*bitIterator == 1)
+        preamble += 1;
+      }else{
+        if(bitIterator >= 96)
         {
-          mode += 1;
-        }else{
-          mode -= 1;
+          if(mode == HIGH){
+            mode = BASE;
+          }else{
+            mode = HIGH;
+          }
+        } else{
+          if(transcodedBits[bitIterator] == 1)
+          {
+            mode += 1;
+          }else{
+            mode -= 1;
+          }
+          bitIterator += 1;
         }
-        bitIterator++;
       }
     }
     //-----------------------------------------------
@@ -160,6 +175,10 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
       *out++ = data->low_sine[phase];
       phase += 1;
       if(phase >= LOW_TABLE_SIZE) { nextSinusoid = true;}
+    }else if(mode == VLOW){
+      *out++ = data->vlow_sine[phase];
+      phase += 1;
+      if(phase >= VLOW_TABLE_SIZE) { nextSinusoid = true;}
     }else{
       printf("we got to a bad place sir.\n");
       return 1;
@@ -180,17 +199,21 @@ int main(void)
   /* initialise sinusoidal wavetables */
   for( i=0; i<BASE_TABLE_SIZE; i++ )
   {
-    data.base_sine[i] = (SAMPLE) (cos( ((double)i/(double)BASE_TABLE_SIZE) * M_PI * 2.0) * 32767);
+    data.base_sine[i] = (SAMPLE) (sin( ((double)i/(double)BASE_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
 
   for( i=0; i<HIGH_TABLE_SIZE; i++ )
   {
-    data.high_sine[i] = (SAMPLE) (cos( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0) * 32767);
+    data.high_sine[i] = (SAMPLE) (sin( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
 
   for( i=0; i<LOW_TABLE_SIZE; i++ )
   {
-    data.low_sine[i] = (SAMPLE) (cos( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
+    data.low_sine[i] = (SAMPLE) (sin( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
+  }
+  for( i=0; i<VLOW_TABLE_SIZE; i++ )
+  {
+    data.vlow_sine[i] = (SAMPLE) (sin( ((double)i/(double)VLOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
 
   err = Pa_Initialize();
