@@ -39,7 +39,7 @@
  * If we were to use paFloat32 for example, the SAMPLE type would
  * be float.
  *
- * 16 bit ints work just fine for voice.
+ * 2 bytes (16 bit ints) work just fine for voice.
  */
 #define PA_SAMPLE_TYPE      paInt16
 typedef short SAMPLE;
@@ -53,8 +53,6 @@ typedef short SAMPLE;
 typedef struct
 {
   CODEC2        *codec2;
-  unsigned char *bits;
-  SAMPLE        *downsampled;
 }
 callbackData;
 
@@ -123,16 +121,6 @@ int main(void)
   /* create a pointer to the codec states */
   data.codec2 = codec2_create(CODEC2_MODE);
 
-  /* determine the number of bits per frame */
-  nbit = codec2_bits_per_frame(data.codec2);
-
-  /* allocate and clean space needed to store the compressed audio */
-  data.bits = (unsigned char *) malloc (nbit * sizeof(char) );
-
-  // blah
-  data.downsampled = (SAMPLE *) malloc ( 320 * sizeof(SAMPLE) );
-
-
   inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
   if (inputParameters.device == paNoDevice) {
     fprintf(stderr,"Error: No default input device.\n");
@@ -174,13 +162,11 @@ int main(void)
 
   printf("Finished.\n");
   Pa_Terminate();
-  free(data.bits);
   codec2_destroy(data.codec2);
   return 0;
 
 error:
   Pa_Terminate();
-  free(data.bits);
   codec2_destroy(data.codec2);
   fprintf( stderr, "An error occured while using the portaudio stream\n" );
   fprintf( stderr, "Error number: %d\n", err );
