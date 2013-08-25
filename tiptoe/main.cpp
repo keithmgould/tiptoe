@@ -3,6 +3,8 @@
 #include "codec2.h"
 #include "portaudio.h"
 #include "../utilities/transcode.cpp"
+#include "../utilities/downsample.cpp"
+
 
 
 /*----------------------------------------------------------------
@@ -52,6 +54,7 @@ typedef struct
 {
   CODEC2        *codec2;
   unsigned char *bits;
+  SAMPLE        *downsampled;
 }
 callbackData;
 
@@ -76,24 +79,31 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
   callbackData *data = (callbackData*)userData;
   SAMPLE *out = (SAMPLE*)outputBuffer;
   SAMPLE *in = (SAMPLE*)inputBuffer;
-  int i;
   (void) timeInfo; /* Prevent unused variable warnings. */
   (void) statusFlags;
   (void) userData;
-
-  short monoBuffer[FRAMES_PER_BUFFER];
+  short downsampled[320];
+  unsigned char compressed[6];
+  bool transcodedBits[96];
 
   if( inputBuffer == NULL )
   {
-    for( i=0; i<framesPerBuffer; i++ )
+    for( int i=0; i<framesPerBuffer; i++ )
     {
       *out++ = 0;
     }
   }
   else
   {
-    codec2_encode(data->codec2, data->bits, in);
-    codec2_decode(data->codec2, out, data->bits);
+    // downsample 1280 samples to 320 samples
+    // by taking every 4th sample
+    Downsample::Perform(in, downsampled, 1280, 4);
+
+    // compress 320 samples to 48 bits (6 bytes)
+    codec2_encode(data->codec2, compressed, downsampled);
+
+    // transcode
+    Transcode::Perform(compressed, transcodedBits, 6);
   }
 
   return paContinue;
@@ -118,6 +128,10 @@ int main(void)
 
   /* allocate and clean space needed to store the compressed audio */
   data.bits = (unsigned char *) malloc (nbit * sizeof(char) );
+
+  // blah
+  data.downsampled = (SAMPLE *) malloc ( 320 * sizeof(SAMPLE) );
+
 
   inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
   if (inputParameters.device == paNoDevice) {
