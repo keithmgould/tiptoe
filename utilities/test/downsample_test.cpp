@@ -1,8 +1,5 @@
 #include <UnitTest++.h>
-#include <iostream>
 #include "../downsample.cpp"
-#define T (true)
-#define F (false)
 
 SUITE (downsample) {
   TEST(perform)

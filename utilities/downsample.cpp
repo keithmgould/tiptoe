@@ -1,6 +1,5 @@
-using namespace std;
-
-class Downsample {
+class Downsample
+{
   public:
   static void Perform(short inputSamples[], short outputSamples[], int inputLength, int downsampleRate)
   {
