@@ -6,6 +6,9 @@
 
   This is used by the demodulator.
 */
+
+using namespace std;
+
 class DeltaFinder
 {
   public:

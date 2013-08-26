@@ -1,4 +1,3 @@
-#include <cmath>
 #include <vector>
 /*
  Demodulate is based off of the demodulator described in the Hermes Paper
@@ -8,7 +7,7 @@
   for each sinusoid in the input sound signal
     fcurr = current sinusoid frequency
     fprev = previous sinusoid frequency
-    if fcurr > fprev
+    if fcurr <= fprev
       output 1
     else
       output 0
@@ -19,6 +18,8 @@
     deltas: time deltas between sinusoids
     outputBits: pointer to the demodulated data array
 */
+using namespace std;
+
 class Demodulate
 {
   public:
