@@ -5,6 +5,8 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include "../utilities/delta_finder.cpp"
+#include "../utilities/demodulate.cpp"
 
 #define SAMPLE_RATE  (32000)
 #define FRAMES_PER_BUFFER (1280)
@@ -31,60 +33,18 @@ typedef struct
     SAMPLE      *recordedSamples;               // holds actual floating point audio samples.  not needed
     int         previousMaximumPosition;        // discrete position of previous local sinusoid maximum
     int         previousDistanceBetweenPeaks;   // discrete distance between last two sinusoid maximums
-    bool        goingDown;                      // are we in the middle of rising or falling on the sinusoid
+    SAMPLE      lastSampleFromPrevBuffer;       // helps with demodulation
     vector<bool> bits;                          // hold the data post demodulation
 
 }
 paTestData;
 
-/*
-  Demodulator: turns raw digitized audio into binary data.
-
-  Based on the Hermes IncDec algorithm.
-
-  Pseudo Code:
-  for each sinusoid in the input sound signal
-    fcurr = current sinusoid frequency
-    fprev = previous sinusoid frequency
-    if fcurr > fprev
-      output 1
-    else
-      output 0
-    end
-  end
-
-  Notes:
-  Due to the fact that we must carry information over from the previous buffer,
-  some of the information is stored in the data struct.
-
-*/
 void demodulator(const void * inputBuffer, paTestData * data)
 {
   float * floatInputBuffer = (float *) inputBuffer;
-  int localMaximumPosition;
-  int distanceBetweenPeaks;
-  for(int i=1; i<FRAMES_PER_BUFFER;i++)
-  {
-    if(floatInputBuffer[i] >= floatInputBuffer[i-1])
-    {
-      // we are going up or cresting
-      data->goingDown = false;
-    }else if(floatInputBuffer[i] < floatInputBuffer[i-1]){
-      // we are going down
-      if (data->goingDown == false)
-      {
-        // we have just begun to go down,
-        // hence we have found a new local maximum
-        data->goingDown = true;
-        localMaximumPosition = i;
-        distanceBetweenPeaks = localMaximumPosition - data->previousMaximumPosition;
-        data->bits.push_back(distanceBetweenPeaks > data->previousDistanceBetweenPeaks);
-        data->previousDistanceBetweenPeaks = distanceBetweenPeaks;
-        data->previousMaximumPosition = localMaximumPosition;
-      }
-    }
-  }
-  data->previousMaximumPosition = localMaximumPosition - FRAMES_PER_BUFFER;
+  vector<float>deltas;
+  DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas);
+  Demodulate::Perform(deltas, data->bits);
 }
 
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
@@ -166,7 +126,7 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto done;
 
-    inputParameters.device = 3; //Pa_GetDefaultInputDevice(); /* default input device */
+    inputParameters.device = 2; //Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {
         fprintf(stderr,"Error: No default input device.\n");
         goto done;

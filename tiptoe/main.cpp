@@ -80,7 +80,7 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
   (void) timeInfo; /* Prevent unused variable warnings. */
   (void) statusFlags;
   (void) userData;
-  short downsampled[320];
+  SAMPLE downsampled[320];
   unsigned char compressed[6];
   bool transcodedBits[96];
 
