@@ -4,7 +4,8 @@
 #define T (true)
 #define F (false)
 
-SUITE (transcode) {
+SUITE (transcode)
+{
   TEST(perform)
   {
     //Create a bunch of random byte input

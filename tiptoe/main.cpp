@@ -46,9 +46,7 @@ typedef short SAMPLE;
 
 
 /*----------------------------------------------------------------
- * callbackData contains any information needed to persist between
- * callbacks (across buffers). We use it so that we don't have to
- * initialize codec2 or its arrays repeatedly.
+ * Callback Data
  */
 typedef struct
 {
@@ -82,10 +80,7 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer, u
 
   if( inputBuffer == NULL )
   {
-    for( int i=0; i<framesPerBuffer; i++ )
-    {
-      *out++ = 0;
-    }
+    for( int i=0; i<framesPerBuffer; i++ ) { *out++ = 0; }
   }
   else
   {
@@ -98,6 +93,9 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer, u
 
     // transcode
     Transcode::Perform(compressed, transcodedBits, 6);
+
+    // transmit
+    Transmit::Perform(transcodedBits, *out);
   }
 
   return paContinue;
