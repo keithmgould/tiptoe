@@ -31,9 +31,8 @@ typedef struct
     int         frameIndex;                     //Index into sample array
     int         maxFrameIndex;
     SAMPLE      *recordedSamples;               // holds actual floating point audio samples.  not needed
-    int         previousMaximumPosition;        // discrete position of previous local sinusoid maximum
-    int         previousDistanceBetweenPeaks;   // discrete distance between last two sinusoid maximums
     SAMPLE      lastSampleFromPrevBuffer;       // helps with demodulation
+    float       deltaAfterLastCrossing;         // used to keep track of the delta between buffers
     vector<bool> bits;                          // hold the data post demodulation
 
 }
@@ -43,7 +42,14 @@ void demodulator(const void * inputBuffer, paTestData * data)
 {
   float * floatInputBuffer = (float *) inputBuffer;
   vector<float>deltas;
-  DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas);
+  // add the last sample, in case it was below zero and the first sample of the
+  // current buffer is above zero.  Otherwise we miss a crossing point.
+  if (data->lastSampleFromPrevBuffer != -1000)
+  {
+    deltas.push_back(data->lastSampleFromPrevBuffer);
+  }
+  DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->deltaAfterLastCrossing);
+  data->lastSampleFromPrevBuffer = deltas.back();
   Demodulate::Perform(deltas, data->bits);
 }
 
@@ -112,8 +118,8 @@ int main(void)
 
     data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;
-    data.previousMaximumPosition = 0;
-    data.previousDistanceBetweenPeaks = 0;
+    data.lastSampleFromPrevBuffer = -1000;
+    data.deltaAfterLastCrossing = -1000;
     numBytes = numSamples * sizeof(SAMPLE);
     data.recordedSamples = (SAMPLE *) malloc( numBytes );
     if( data.recordedSamples == NULL )

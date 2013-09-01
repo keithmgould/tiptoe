@@ -68,11 +68,7 @@ callbackData;
  * 3) modulate.  Using IncDec (see "Hermes: Data Transmission over Unknown Voice Channels")
  */
 
-static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
-                         unsigned long framesPerBuffer,
-                         const PaStreamCallbackTimeInfo* timeInfo,
-                         PaStreamCallbackFlags statusFlags,
-                         void *userData )
+static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData )
 {
   callbackData *data = (callbackData*)userData;
   SAMPLE *out = (SAMPLE*)outputBuffer;

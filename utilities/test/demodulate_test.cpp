@@ -14,9 +14,9 @@ SUITE (demodulate)
     deltas.push_back(0.002);
     Demodulate::Perform(deltas, bits);
     vector<bool>::iterator bitIterator = bits.begin();
-    CHECK_EQUAL(*bitIterator++, true);
     CHECK_EQUAL(*bitIterator++, false);
     CHECK_EQUAL(*bitIterator++, true);
     CHECK_EQUAL(*bitIterator++, false);
+    CHECK_EQUAL(*bitIterator++, true);
   }
 }

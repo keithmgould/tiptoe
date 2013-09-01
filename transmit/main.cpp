@@ -16,7 +16,7 @@
 #define FRAMES_PER_BUFFER  (1280) // 320 * 4
 
 #ifndef M_PI
-#define M_PI  (3.14159265)
+#define M_PI  (3.14159265) // as determined with a nail, twine and chalk.
 #endif
 
 using namespace std;
@@ -25,10 +25,10 @@ using namespace std;
 #define LOW_TABLE_SIZE    (13)
 #define BASE_TABLE_SIZE   (12)
 #define HIGH_TABLE_SIZE   (11)
-#define VLOW  (4)
-#define LOW   (3)
-#define BASE  (2)
-#define HIGH  (1)
+#define VLOW  (1)
+#define LOW   (2)
+#define BASE  (3)
+#define HIGH  (4)
 
 typedef short SAMPLE;
 
@@ -41,11 +41,111 @@ typedef struct
 }
 transmitData;
 
-static int transmitCallback( const void *inputBuffer, void *outputBuffer,
-    unsigned long framesPerBuffer,
-    const PaStreamCallbackTimeInfo* timeInfo,
-    PaStreamCallbackFlags statusFlags,
-    void *userData )
+// int determineNeededFrameCount(bool transcodedBits[])
+// {
+  // int phase = 0;
+  // int mode = BASE;
+  // int totalFrames = 0;
+  // int lowCount = 0;
+  // int highCount = 0;
+  // int baseCount = 0;
+  // int bitIterator = 0;
+
+  // // Count how many frames are needed to modulate the data
+  // for(bitIterator = 0; bitIterator< 96; bitIterator++)
+  // {
+    // if(transcodedBits[bitIterator] == 0)
+    // {
+      // mode -= 1;
+    // }else{
+      // mode += 1;
+    // }
+    // //--------------------------------
+    // if(mode == LOW)
+    // {
+      // lowCount += 1;
+      // totalFrames += LOW_TABLE_SIZE;
+    // }else if(mode == BASE)
+    // {
+      // baseCount += 1;
+      // totalFrames += BASE_TABLE_SIZE;
+    // }else if(mode == HIGH){
+      // highCount += 1;
+      // totalFrames += HIGH_TABLE_SIZE;
+    // }else{
+      // cout << endl << "mode is out of range.  It is now: " << mode << endl;
+      // return 1;
+    // }
+  // }
+
+  // // frames for preamble
+  // totalFrames += VLOW_TABLE_SIZE + LOW_TABLE_SIZE + (2 * BASE_TABLE_SIZE) + HIGH_TABLE_SIZE;
+
+  // // int neededFrames =  FRAMES_PER_BUFFER - totalFrames;
+  // // printf("totalFrames: %d\n", totalFrames);
+  // // printf("lowCount: %d\n", lowCount);
+  // // printf("baseCount: %d\n", baseCount);
+  // // printf("highCount: %d\n", highCount);
+  // // printf("neededFrames: %d\n", neededFrames);
+  // return totalFrames;
+// };
+
+/*
+  Determine Next Node.
+  Each buffer begins with preamble consisting of 4 sinusoids,
+  one of which is not possible to use during normal
+  modulation (this is the VLOW frequency).  The VLOW sinusoid means that the preamble
+  emits three consecutive zeros, which is not possible during norming modulation
+
+  After the preamble, modulation is achieved using the IncDec algorithm found in the
+  Hermes paper: a 1 yields a lower frequency, and a 0 yields a higher frequency.
+ */
+void determineNextMode(int *mode, int *preamble, bool transcodedBits[], int *bitIterator)
+{
+  if (*preamble <= 4)
+  {
+    switch (*preamble){
+      case 0:
+        // cout << endl << endl;
+        *mode = VLOW;
+        break;
+      case 1:
+        *mode = LOW;
+        break;
+      case 2:
+        *mode = BASE;
+        break;
+      case 3:
+        *mode = HIGH;
+        break;
+      case 4:
+        *mode = BASE;
+        break;
+    }
+    *preamble += 1;
+  }else{
+    if(*bitIterator >= 96)
+    {
+      if(*mode == HIGH){
+        *mode = BASE;
+      }else{
+        *mode = HIGH;
+      }
+    } else{
+      // IncDec Algorithm #1 from Hermes paper.
+      if(transcodedBits[*bitIterator] == 0)
+      {
+        *mode -= 1;
+      }else{
+        *mode += 1;
+      }
+      *bitIterator += 1;
+    }
+  }
+  // cout << *mode;
+};
+
+static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData )
 {
   transmitData *data = (transmitData*)userData;
   SAMPLE *out = (SAMPLE*)outputBuffer;
@@ -54,115 +154,39 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
   (void) statusFlags;
   (void) inputBuffer;
 
-  // faux input -- some random bytes
+  // faux input: 6 random bytes
   // 48 bits will come from Codec2...
-  unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 };
-  // transcoded:
+  // which when transcoded:
   // 101001100101101010011001100101100110011010100110010110011010011010011010101001011001011001100101
-
+  unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 };
   bool transcodedBits[96];
   Transcode::Perform(faux, transcodedBits, 6);
 
+
+  int i;
   bool nextSinusoid = true;
   int preamble = 0;
   int phase = 0;
   int mode = BASE;
-  int totalFrames = 0;
-  int lowCount = 0;
-  int highCount = 0;
-  int baseCount = 0;
   int bitIterator = 0;
-  for(bitIterator =0; bitIterator< 96; bitIterator++)
+
+  //-----------------------------------------
+  // cout << endl << endl;
+  // for(i=0;i<96;i++)
+  // {
+    // cout << transcodedBits[i];
+  // }
+  // cout << endl << endl;
+  //-----------------------------------------
+
+  for(i=0; i<framesPerBuffer; i++ )
   {
-    if(transcodedBits[bitIterator]== true)
-    {
-      mode += 1;
-    }else{
-      mode -= 1;
-    }
-    //--------------------------------
-    if(mode == LOW)
-    {
-      lowCount += 1;
-      totalFrames += LOW_TABLE_SIZE;
-    }else if(mode == BASE)
-    {
-      baseCount += 1;
-      totalFrames += BASE_TABLE_SIZE;
-    }else if(mode == HIGH){
-      highCount += 1;
-      totalFrames += HIGH_TABLE_SIZE;
-    }else{
-      cout << endl << "mode is out of range.  It is now: " << mode << endl;
-      return 1;
-    }
-  }
-
-  // frames for preamble
-  totalFrames += VLOW_TABLE_SIZE + LOW_TABLE_SIZE + (2 * BASE_TABLE_SIZE) + HIGH_TABLE_SIZE;
-
-  int neededFrames =  FRAMES_PER_BUFFER - totalFrames;
-  // printf("totalFrames: %d\n", totalFrames);
-  // printf("lowCount: %d\n", lowCount);
-  // printf("baseCount: %d\n", baseCount);
-  // printf("highCount: %d\n", highCount);
-  // printf("neededFrames: %d\n", neededFrames);
-  bitIterator = 0;
-
-  for( int i=0; i<framesPerBuffer; i++ )
-  {
-    //--------------------------------------------------
-    // this calculates the mode
     if(nextSinusoid)
     {
+      determineNextMode(&mode, &preamble, transcodedBits, &bitIterator);
       nextSinusoid = false;
       phase = 0;
-      if (preamble <= 4)
-      {
-        switch (preamble){
-          case 0:
-            // printf("A");
-            mode = VLOW;
-            break;
-          case 1:
-            // printf("B");
-            mode = LOW;
-            break;
-          case 2:
-            // printf("C");
-            mode = BASE;
-            break;
-          case 3:
-            // printf("D");
-            mode = HIGH;
-            break;
-          case 4:
-            // printf("E");
-            mode = BASE;
-            break;
-        }
-        preamble += 1;
-      }else{
-        if(bitIterator >= 96)
-        {
-          if(mode == HIGH){
-            mode = BASE;
-          }else{
-            mode = HIGH;
-          }
-        } else{
-          if(transcodedBits[bitIterator] == 1)
-          {
-            mode -= 1;
-          }else{
-            mode += 1;
-          }
-          bitIterator += 1;
-        }
-      }
     }
-    //-----------------------------------------------
-    // this outputs the sinusoid of the given mode
     if (mode == HIGH){
       *out++ = data->high_sine[phase];
       phase += 1;
@@ -219,7 +243,7 @@ int main(void)
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
-  outputParameters.device =2; // Pa_GetDefaultOutputDevice(); /* default output device */
+  outputParameters.device = 2; // Pa_GetDefaultOutputDevice(); /* default output device */
   if (outputParameters.device == paNoDevice) {
     fprintf(stderr,"Error: No default output device.\n");
     goto error;

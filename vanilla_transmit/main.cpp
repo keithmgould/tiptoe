@@ -22,17 +22,24 @@
 
 using namespace std;
 
-#define LOW_TABLE_SIZE    (11)
+
+#define VLOW_TABLE_SIZE    (15)
+#define LOW_TABLE_SIZE    (13)
+#define MED_TABLE_SIZE    (11)
 #define HIGH_TABLE_SIZE   (9)
-#define HIGH  (0)
-#define LOW   (1)
+#define HIGH (3)
+#define MED  (2)
+#define LOW  (1)
+#define VLOW  (0)
 
 typedef short SAMPLE;
 
 typedef struct
 {
   SAMPLE high_sine[HIGH_TABLE_SIZE];
+  SAMPLE med_sine[MED_TABLE_SIZE];
   SAMPLE low_sine[LOW_TABLE_SIZE];
+  SAMPLE vlow_sine[VLOW_TABLE_SIZE];
 }
 transmitData;
 
@@ -51,8 +58,9 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
 
   bool nextSinusoid = true;
   int phase = 0;
-  int mode = LOW;
-
+  int mode;
+  int message[8] = {0,1,2,3,2,3,2,3}; // produces 00010101 (repeats)
+  int messagePosition = 0;
   for( int i=0; i<framesPerBuffer; i++ )
   {
     //--------------------------------------------------
@@ -61,11 +69,9 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
     {
       nextSinusoid = false;
       phase = 0;
-      if(mode == HIGH){
-        mode = LOW;
-      }else{
-        mode = HIGH;
-      }
+      mode = message[messagePosition++];
+      // cout << mode;
+      if(messagePosition > 7){ messagePosition = 0;}
     }
     //-----------------------------------------------
     // this outputs the sinusoid of the given mode
@@ -73,10 +79,18 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer,
       *out++ = data->high_sine[phase];
       phase += 1;
       if(phase >= HIGH_TABLE_SIZE) { nextSinusoid = true;}
+    }else if(mode == MED){
+      *out++ = data->med_sine[phase];
+      phase += 1;
+      if(phase >= MED_TABLE_SIZE) { nextSinusoid = true;}
     }else if(mode == LOW){
       *out++ = data->low_sine[phase];
       phase += 1;
       if(phase >= LOW_TABLE_SIZE) { nextSinusoid = true;}
+    }else if(mode == VLOW){
+      *out++ = data->vlow_sine[phase];
+      phase += 1;
+      if(phase >= VLOW_TABLE_SIZE) { nextSinusoid = true;}
     }else{
       printf("we got to a bad place sir.\n");
       return 1;
@@ -100,9 +114,19 @@ int main(void)
     data.high_sine[i] = (SAMPLE) (sin( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
 
+  for( i=0; i<MED_TABLE_SIZE; i++ )
+  {
+    data.med_sine[i] = (SAMPLE) (sin( ((double)i/(double)MED_TABLE_SIZE) * M_PI * 2.0) * 32767);
+  }
+
   for( i=0; i<LOW_TABLE_SIZE; i++ )
   {
     data.low_sine[i] = (SAMPLE) (sin( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
+  }
+
+  for( i=0; i<VLOW_TABLE_SIZE; i++ )
+  {
+    data.vlow_sine[i] = (SAMPLE) (sin( ((double)i/(double)VLOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
 
   err = Pa_Initialize();
