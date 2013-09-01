@@ -9,26 +9,12 @@
 #define SAMPLE_RATE   (32000) // 8000 * 4
 #define FRAMES_PER_BUFFER  (1280) // 320 * 4
 
-#ifndef M_PI
-#define M_PI  (3.14159265) // as determined with a nail, twine and chalk.
-#endif
-
 using namespace std;
-
-#define VLOW_TABLE_SIZE   (14)
-#define LOW_TABLE_SIZE    (13)
-#define BASE_TABLE_SIZE   (12)
-#define HIGH_TABLE_SIZE   (11)
-#define VLOW  (1)
-#define LOW   (2)
-#define BASE  (3)
-#define HIGH  (4)
 
 typedef short SAMPLE;
 
 static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData )
 {
-  // transmitData *data = (transmitData*)userData;
   Transmitter *transmitter = (Transmitter*)userData;
   SAMPLE *out = (SAMPLE*)outputBuffer;
 
@@ -36,8 +22,7 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
   (void) statusFlags;
   (void) inputBuffer;
 
-  // 6 bytes (48 bits) will come from Codec2
-  // so faux input: 6 random bytes
+  // 6 bytes (48 bits) will come from Codec2 so faux input: 6 random bytes
   // which when transcoded becomes:
   // 101001100101101010011001100101100110011010100110010110011010011010011010101001011001011001100101
   unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 };
@@ -54,7 +39,7 @@ int main(void)
   PaStreamParameters outputParameters;
   PaStream *stream;
   PaError err;
-  Transmitter transmitter(1280);
+  Transmitter transmitter(FRAMES_PER_BUFFER);
 
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
