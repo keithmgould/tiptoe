@@ -130,7 +130,7 @@ void Transmitter::buildWaveforms()
 }
 
 /*
-  Determine Next Node.
+  Determine Next Mode.
   Each buffer begins with preamble consisting of 4 sinusoids,
   one of which is not possible to use during normal
   modulation (this is the VLOW frequency).  The VLOW sinusoid allows for the preamble
@@ -138,6 +138,9 @@ void Transmitter::buildWaveforms()
 
   After the preamble, modulation is achieved using the IncDec algorithm found in the
   Hermes paper.
+
+  Once all the data is modulated, the function returns zeros and ones until the output
+  buffer is full.
  */
 void Transmitter::determineNextMode(int *mode, int *preamble, bool transcodedBits[], int *bitIterator)
 {
