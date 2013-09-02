@@ -3,6 +3,7 @@
 #include "codec2.h"
 #include "portaudio.h"
 #include "../utilities/transcode.cpp"
+#include "../utilities/transmit.cpp"
 #include "../utilities/downsample.cpp"
 
 
@@ -46,24 +47,26 @@ typedef short SAMPLE;
 
 
 /*----------------------------------------------------------------
- * Callback Data
+ * Callback Data.  Persists across buffers.  Used here to hold on
+ * to large objects that take time to instantiate.
  */
 typedef struct
 {
   CODEC2        *codec2;
+  Transmitter   *transmitter;
 }
 callbackData;
 
 /*----------------------------------------------------------------
- * localToRemoteCallback is called everytime the buffer is full.
- *
- * local audio comes directly in from the user.
- * remote audio comes in over the telco's line (the phone line)
+ * localToRemoteCallback is called everytime the input buffer
+ * is full.
  *
  * localToRemoteCallback's job is to take local audio and:
- * 1) compress.  Using codec2
- * 2) encrypt.  Using AES256
- * 3) modulate.  Using IncDec (see "Hermes: Data Transmission over Unknown Voice Channels")
+ * 0) receive - using portaudio, receive audio from microphone
+ * 1) compress - using codec2
+ * 2) encrypt - using AES256
+ * 3) modulate - using IncDec (see "Hermes: Data Transmission over Unknown Voice Channels")
+ * 4) emit - using portaudio, emit modulated data to speakers
  */
 
 static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData )
@@ -84,18 +87,20 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer, u
   }
   else
   {
-    // downsample 1280 samples to 320 samples
-    // by taking every 4th sample
+    // downsample 1280 samples to 320 samples by taking every 4th sample
     Downsample::Perform(in, downsampled, 1280, 4);
 
-    // compress 320 samples to 48 bits (6 bytes)
+    // compress 320 samples to 6 bytes (48 bits)
     codec2_encode(data->codec2, compressed, downsampled);
 
-    // transcode
+    // transcode via IncDec algorithm. (outputs 96 bits)
     Transcode::Perform(compressed, transcodedBits, 6);
 
+    // prep the transmitter
+    data->transmitter->setBits(transcodedBits);
+
     // transmit
-    Transmit::Perform(transcodedBits, *out);
+    data->transmitter->emitSound(out);
   }
 
   return paContinue;
@@ -108,12 +113,15 @@ int main(void)
   PaStream *stream;
   PaError err;
   callbackData data;
-  int nbit;
+  Transmitter transmitter(FRAMES_PER_BUFFER);
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
+
   /* create a pointer to the codec states */
   data.codec2 = codec2_create(CODEC2_MODE);
+
+  data.transmitter = &transmitter;
 
   inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
   if (inputParameters.device == paNoDevice) {
