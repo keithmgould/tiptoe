@@ -27,7 +27,7 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
   // 101001100101101010011001100101100110011010100110010110011010011010011010101001011001011001100101
   unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 };
   bool transcodedBits[96];
-  Transcode::Perform(faux, transcodedBits, 6);
+  Transcode::Double(faux, transcodedBits, 6);
   transmitter->setBits(transcodedBits);
   transmitter->emitSound(out);
   return paContinue;
@@ -74,7 +74,7 @@ int main(void)
   if( err != paNoError ) goto error;
 
   Pa_Terminate();
-  printf("Test finished.\n");
+  printf("Finished.\n");
 
   return err;
 error:
