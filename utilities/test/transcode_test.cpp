@@ -21,12 +21,4 @@ SUITE (transcode)
       CHECK_EQUAL(correctBits[i], transcodedBits[i]);
     }
   }
-
-  TEST(extract_with_perfect_transmission)
-  {
-
-    bool transcodedBits[18] = {F,T,F,T,F,F,T,T,F,T,T,T,F,T,F,F,T,F};
-    bool dataBits[10];
-    Transcode::Extract(transcodedBits, dataBits, 18);
-  }
 }

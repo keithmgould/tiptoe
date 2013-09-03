@@ -12,13 +12,13 @@
  */
 
 #include <vector>
-#include <queue>
 using namespace std;
 
 class Extract
 {
   public:
-  void findPreamble();
+  vector<bool> transmittedBits;
+  int findPreamble();
   void reverseTranscode();
   void stitch();
   Extract (vector<bool> &transmittedBits); // constructor
@@ -29,9 +29,9 @@ class Extract
  *
  * Takes the raw transmitted bits
  */
-Extract::Extract (vector<bool> *transmittedBits)
+Extract::Extract (vector<bool> &transmittedBits)
 {
-  queue<bool, deque<bool>> transmittedBitsQueue(deque<bool>(transmittedBits.begin(), transmittedBits.end());
+  this->transmittedBits = transmittedBits;
 }
 
 /* findPreamble()
@@ -39,11 +39,23 @@ Extract::Extract (vector<bool> *transmittedBits)
  * Searches through the raw transmittedBits for
  * the preamble.
  *
- * To do this efficiently, we use the queue.
+ * Function returns the index of the start of the preamble.
+ * If preamble not found it returns -1.
+ *
  */
-Extract::findPreamble()
+int Extract::findPreamble()
 {
-
+  for(int i = 3; i < this->transmittedBits.size(); i++)
+  {
+    if( this->transmittedBits.at(i-3) == true &&
+        this->transmittedBits.at(i-2) == true &&
+        this->transmittedBits.at(i-1) == true &&
+        this->transmittedBits.at(i)   == false)
+    {
+      return i-3;
+    }
+  }
+  return -1;
 }
 
 /* stitch()
@@ -55,7 +67,7 @@ Extract::findPreamble()
  * In particular, we must stitch the data found between the last two
  * preambles.
  */
-Extract::stitch()
+void Extract::stitch()
 {
 
 }
@@ -67,7 +79,7 @@ Extract::stitch()
  * and reverseTranscode must deal with insertions, deletions and bit flips.
  */
 
-Extract::reverseTranscode()
+void Extract::reverseTranscode()
 {
 
 }

@@ -4,6 +4,7 @@
 #include "downsample_test.cpp"
 #include "transcode_test.cpp"
 #include "transmit_test.cpp"
+#include "extract_test.cpp"
 
 int main(int, char const *[])
 {
