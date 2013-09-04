@@ -11,15 +11,19 @@
  *
  */
 
+#define T (true)
+#define F (false)
 #include <vector>
 using namespace std;
 
 class Extract
 {
   public:
+  int preambleIndex;
   vector<bool> transmittedBits;
-  int findPreamble();
+  void findPreamble();
   void reverseTranscode();
+  void storePostPreambleBits(vector<bool> &postPreambleBits);
   void stitch();
   Extract (vector<bool> &transmittedBits); // constructor
 };
@@ -27,10 +31,11 @@ class Extract
 /*
  * The Constructor
  *
- * Takes the raw transmitted bits
+ * Takes the raw transmitted bits.
  */
 Extract::Extract (vector<bool> &transmittedBits)
 {
+  this->preambleIndex = -1;
   this->transmittedBits = transmittedBits;
 }
 
@@ -43,7 +48,7 @@ Extract::Extract (vector<bool> &transmittedBits)
  * If preamble not found it returns -1.
  *
  */
-int Extract::findPreamble()
+void Extract::findPreamble()
 {
   for(int i = 3; i < this->transmittedBits.size(); i++)
   {
@@ -52,24 +57,38 @@ int Extract::findPreamble()
         this->transmittedBits.at(i-1) == true &&
         this->transmittedBits.at(i)   == false)
     {
-      return i-3;
+      this->preambleIndex = i-3;
     }
   }
-  return -1;
+}
+
+/* storePostPreambleBits
+ *
+ * The bits in this buffer found after the preamble will be used
+ * in combination with the pre-preamble bits from the next buffer
+ */
+void Extract::storePostPreambleBits(vector<bool> &postPreambleBits)
+{
+
 }
 
 /* stitch()
  *
- * A frame from the other end of the wire will most likely span across
- * two buffers locally.  Therefor to reconstruct the 96 bits we must
- * stitch the results of the previous buffer with the results of this buffer.
+ * A buffer from the other side of the wire will most likely span across
+ * two local buffers.  Therefor to reconstruct the 96 bits we must
+ * stitch the combined results of post-preamble data from the previous
+ * buffer with pre-preamble data from the current buffer.
  *
- * In particular, we must stitch the data found between the last two
- * preambles.
+ * TODO: what happens if (when) the preamble gets split between two receiving
+ * buffers? Oy.
  */
 void Extract::stitch()
 {
+  // if we don't know where the preamble is, we have nothing
+  if(this->preambleIndex == -1) { return; }
 
+  // first, store the data after the preamble
+  int dataBeginsAt = this->preambleIndex + PREAMBLE_LENGTH;
 }
 
 /* reverseTranscode()
@@ -78,7 +97,6 @@ void Extract::stitch()
  * action of Transcode on the raw bits.  Unfortunately there might be noise
  * and reverseTranscode must deal with insertions, deletions and bit flips.
  */
-
 void Extract::reverseTranscode()
 {
 

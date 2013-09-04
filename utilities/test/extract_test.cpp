@@ -28,7 +28,8 @@ SUITE (extract)
     testInput.push_back(true);
 
     Extract extract(testInput);
-    CHECK_EQUAL(-1, extract.findPreamble());
+    extract.findPreamble();
+    CHECK_EQUAL(-1, extract.preambleIndex);
   }
 
   TEST (findPreamble_preambleFound)
@@ -45,6 +46,27 @@ SUITE (extract)
     testInput.push_back(true);
 
     Extract extract(testInput);
-    CHECK_EQUAL(4, extract.findPreamble());
+    extract.findPreamble();
+    CHECK_EQUAL(4, extract.preambleIndex);
+  }
+
+  TEST (storePostPreambleBits)
+  {
+    CHECK_EQUAL(1,1);
+  }
+
+  TEST (stitch_with_no_data_from_previous_buffer)
+  {
+    CHECK_EQUAL(1,1);
+  }
+
+  TEST (stitch_with_data_from_previous_buffer)
+  {
+    CHECK_EQUAL(1,1);
+  }
+
+  TEST (stitch_where_preamble_split_between_buffers)
+  {
+    CHECK_EQUAL(1,1);
   }
 }

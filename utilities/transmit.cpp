@@ -7,19 +7,20 @@
 using namespace std;
 
 // The number of samples per frequency mode
+// TODO: its not great that these numbers are
+//       dissasociated with the sample frequency.
 #define VLOW_TABLE_SIZE   (14)
 #define LOW_TABLE_SIZE    (13)
 #define BASE_TABLE_SIZE   (12)
 #define HIGH_TABLE_SIZE   (11)
 
-// the various frequency modes.  VLOW is only used in
-// the preamble
+// the various frequency modes
 #define VLOW  (1)
 #define LOW   (2)
 #define BASE  (3)
 #define HIGH  (4)
 
-// audio samples are of type short;
+// local input audio samples are of type short
 typedef short SAMPLE;
 
 // holds the waveforms
@@ -33,13 +34,14 @@ typedef struct
 waveformContainer;
 
 class Transmitter {
-  bool * transcodedBits;
+  vector<bool> transcodedBits;
+  vector<bool>::iterator bitIterator;
   int framesPerBuffer;
   void buildWaveforms();
-  void determineNextMode(int *mode, int *preamble, bool transcodedBits[], int *bitIterator);
+  int determineNextMode(int mode);
   public:
   void emitSound(short *out );
-  void setBits(bool transcodedBits[] );
+  void setBits(vector<bool> &transcodedBits);
   waveformContainer waveforms;
   Transmitter (int framesPerBuffer);
 };
@@ -51,14 +53,19 @@ Transmitter::Transmitter (int framesPerBuffer)
   buildWaveforms();
 }
 
-void Transmitter::setBits ( bool transcodedBits[] )
+// resets the transmitter with the new data to send
+void Transmitter::setBits ( vector<bool> &transcodedBits )
 {
+  // TODO: do we need to clear the vector here?
   this->transcodedBits = transcodedBits;
+  this->bitIterator = this->transcodedBits.begin();
+  // this->transcodedBits.push_back(true);
 }
 
 /*
   Emit Sound
   This function places the proper sinusoids in the output buffer
+  TODO: Refactor
 */
 void Transmitter::emitSound( short *out )
 {
@@ -72,7 +79,7 @@ void Transmitter::emitSound( short *out )
   {
     if(nextSinusoid)
     {
-      this->determineNextMode(&mode, &preamble, transcodedBits, &bitIterator);
+      mode = this->determineNextMode(mode);
       nextSinusoid = false;
       phase = 0;
     }
@@ -104,11 +111,11 @@ void Transmitter::emitSound( short *out )
    Builds the waveforms used to generate sound.
    This is done using the standard definition of sine, and then converted
    into a type short with the multiplication of 32767.
+   TODO: refactor
 */
 void Transmitter::buildWaveforms()
 {
   int i;
-  /* initialise sinusoidal wavetables */
   for( i=0; i<BASE_TABLE_SIZE; i++ )
   {
     this->waveforms.base_sine[i] = (SAMPLE) (sin( ((double)i/(double)BASE_TABLE_SIZE) * M_PI * 2.0) * 32767);
@@ -123,6 +130,7 @@ void Transmitter::buildWaveforms()
   {
     this->waveforms.low_sine[i] = (SAMPLE) (sin( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
   }
+
   for( i=0; i<VLOW_TABLE_SIZE; i++ )
   {
     this->waveforms.vlow_sine[i] = (SAMPLE) (sin( ((double)i/(double)VLOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
@@ -131,109 +139,35 @@ void Transmitter::buildWaveforms()
 
 /*
   Determine Next Mode.
-  Each buffer begins with preamble consisting of 4 sinusoids,
-  one of which is not possible to use during normal
-  modulation (this is the VLOW frequency).  The VLOW sinusoid allows for the preamble
-  to emit three consecutive ones, which is not possible during norming modulation.
 
-  After the preamble, modulation is achieved using the IncDec algorithm found in the
+  modulation is achieved using the IncDec algorithm found in the
   Hermes paper.
 
   Once all the data is modulated, the function returns zeros and ones until the output
   buffer is full.
+
+  TODO: Refactor
  */
-void Transmitter::determineNextMode(int *mode, int *preamble, bool transcodedBits[], int *bitIterator)
+int Transmitter::determineNextMode(int mode)
 {
-  if (*preamble <= 4)
+  // if we are finished sending data, use alternating
+  // ones and zeros as filler.  Otherwise send the
+  // data
+  if( this->bitIterator == this.transcodedBits.end() )
   {
-    switch (*preamble){
-      case 0:
-        // cout << endl << endl;
-        *mode = VLOW;
-        break;
-      case 1:
-        *mode = LOW;
-        break;
-      case 2:
-        *mode = BASE;
-        break;
-      case 3:
-        *mode = HIGH;
-        break;
-      case 4:
-        *mode = BASE;
-        break;
+    if(mode == HIGH){
+      mode = BASE;
+    }else{
+      mode = HIGH;
     }
-    *preamble += 1;
-  }else{
-    if(*bitIterator >= 96)
+  } else{
+    if( this->bitIterator == 0)
     {
-      if(*mode == HIGH){
-        *mode = BASE;
-      }else{
-        *mode = HIGH;
-      }
-    } else{
-      // IncDec Algorithm #1 from Hermes paper.
-      if(transcodedBits[*bitIterator] == 0)
-      {
-        *mode -= 1;
-      }else{
-        *mode += 1;
-      }
-      *bitIterator += 1;
+      mode -= 1;
+    }else{
+      mode += 1;
     }
+    this->bitIterator++;
   }
-  // cout << *mode;
+  return mode;
 };
-
-
-
-// int determineNeededFrameCount(bool transcodedBits[])
-// {
-  // int phase = 0;
-  // int mode = BASE;
-  // int totalFrames = 0;
-  // int lowCount = 0;
-  // int highCount = 0;
-  // int baseCount = 0;
-  // int bitIterator = 0;
-
-  // // Count how many frames are needed to modulate the data
-  // for(bitIterator = 0; bitIterator< 96; bitIterator++)
-  // {
-    // if(transcodedBits[bitIterator] == 0)
-    // {
-      // mode -= 1;
-    // }else{
-      // mode += 1;
-    // }
-    // //--------------------------------
-    // if(mode == LOW)
-    // {
-      // lowCount += 1;
-      // totalFrames += LOW_TABLE_SIZE;
-    // }else if(mode == BASE)
-    // {
-      // baseCount += 1;
-      // totalFrames += BASE_TABLE_SIZE;
-    // }else if(mode == HIGH){
-      // highCount += 1;
-      // totalFrames += HIGH_TABLE_SIZE;
-    // }else{
-      // cout << endl << "mode is out of range.  It is now: " << mode << endl;
-      // return 1;
-    // }
-  // }
-
-  // // frames for preamble
-  // totalFrames += VLOW_TABLE_SIZE + LOW_TABLE_SIZE + (2 * BASE_TABLE_SIZE) + HIGH_TABLE_SIZE;
-
-  // // int neededFrames =  FRAMES_PER_BUFFER - totalFrames;
-  // // printf("totalFrames: %d\n", totalFrames);
-  // // printf("lowCount: %d\n", lowCount);
-  // // printf("baseCount: %d\n", baseCount);
-  // // printf("highCount: %d\n", highCount);
-  // // printf("neededFrames: %d\n", neededFrames);
-  // return totalFrames;
-// };
