@@ -85,7 +85,40 @@ SUITE (extract)
 
   TEST (stitch_with_data_from_previous_buffer)
   {
-    CHECK_EQUAL(1,1);
+    vector<bool> prePreambleBits;
+    prePreambleBits.push_back(false);
+    prePreambleBits.push_back(true);
+    prePreambleBits.push_back(true);
+
+    vector<bool> testInput;
+    testInput.push_back(false);
+    testInput.push_back(false);
+    testInput.push_back(false);
+    testInput.push_back(true);
+    testInput.push_back(false); // preamble begins here
+    testInput.push_back(false);
+    testInput.push_back(false);
+    testInput.push_back(true);
+    testInput.push_back(true);
+    testInput.push_back(true);
+    testInput.push_back(false); // preamble ends here
+    testInput.push_back(true);
+    Extract extract(testInput);
+    extract.preambleIndex = 4;
+    extract.stitch(prePreambleBits);
+
+    vector<bool> correctBits;
+    // these are the postPreamable bits from last buffer
+    correctBits.push_back(false);
+    correctBits.push_back(true);
+    correctBits.push_back(true);
+    // these are the pre-preamble bits from this buffer
+    correctBits.push_back(false);
+    correctBits.push_back(false);
+    correctBits.push_back(false);
+    correctBits.push_back(true);
+
+    CHECK(correctBits == extract.stitchedBits);
   }
 
   TEST (stitch_where_preamble_split_between_buffers)

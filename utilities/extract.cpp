@@ -21,10 +21,11 @@ class Extract
   public:
   int preambleIndex;
   vector<bool> transmittedBits;
+  vector<bool> stitchedBits;
   void findPreamble();
   void reverseTranscode();
   void storePostPreambleBits(vector<bool> &postPreambleBits);
-  void stitch();
+  void stitch(vector<bool> &prePreambleBits);
   Extract (vector<bool> &transmittedBits); // constructor
 };
 
@@ -97,8 +98,14 @@ void Extract::stitch(vector<bool> &prePreambleBits)
   // if we don't know where the preamble is, we have nothing
   if(this->preambleIndex == -1) { return; }
 
-  // first, store the data after the preamble
-  // int dataBeginsAt = this->preambleIndex + PREAMBLE_LENGTH;
+  // get to the end of the preamble
+  vector<bool>::iterator beginningOfPreamble = this->transmittedBits.begin() + this->preambleIndex;
+
+  // first add in the prePremable bits (the bits from after the last bufffers preamble)
+  this->stitchedBits.assign(prePreambleBits.begin(), prePreambleBits.end());
+
+  // then add in this buffers bits from before the preamble
+  this->stitchedBits.insert(stitchedBits.end(), this->transmittedBits.begin(), beginningOfPreamble);
 }
 
 /* reverseTranscode()
