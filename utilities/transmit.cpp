@@ -60,7 +60,6 @@ Transmitter::Transmitter (int framesPerBuffer)
 // resets the transmitter with the new data to send
 void Transmitter::setBits ( vector<bool> &transcodedBits )
 {
-  // TODO: do we need to clear the vector here?
   this->transcodedBits = transcodedBits;
   this->bitIterator = this->transcodedBits.begin();
   // this->transcodedBits.push_back(true);

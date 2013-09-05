@@ -67,12 +67,19 @@ void Extract::findPreamble()
 
 /* storePostPreambleBits
  *
- * The bits in this buffer found after the preamble will be used
- * in combination with the pre-preamble bits from the next buffer
+ * The post-preamble bits in this buffer will be used
+ * in combination with the pre-preamble bits in the next buffer
  */
 void Extract::storePostPreambleBits(vector<bool> &postPreambleBits)
 {
+  // if we don't know where the preamble is, we have nothing
+  if(this->preambleIndex == -1) { return; }
 
+  // get to the end of the preamble
+  vector<bool>::iterator endOfPreamble = this->transmittedBits.begin() + this->preambleIndex + 5;
+
+  // from end of preamble to end of transmittedBits
+  postPreambleBits.assign(endOfPreamble, this->transmittedBits.end());
 }
 
 /* stitch()
@@ -85,7 +92,7 @@ void Extract::storePostPreambleBits(vector<bool> &postPreambleBits)
  * TODO: what happens if (when) the preamble gets split between two receiving
  * buffers? Oy.
  */
-void Extract::stitch()
+void Extract::stitch(vector<bool> &prePreambleBits)
 {
   // if we don't know where the preamble is, we have nothing
   if(this->preambleIndex == -1) { return; }
