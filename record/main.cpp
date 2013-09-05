@@ -32,7 +32,7 @@ typedef struct
     int         maxFrameIndex;
     SAMPLE      *recordedSamples;               // holds actual floating point audio samples.  not needed
     SAMPLE      lastSampleFromPrevBuffer;       // helps with demodulation
-    flaost         deltaAfterLastCrossing;         // used to keep track of the delta between buffers
+    float       deltaAfterLastCrossing;         // used to keep track of the delta between buffers
     vector<bool> bits;                          // hold the data post demodulation
 
 }
@@ -48,7 +48,7 @@ void demodulator(const void * inputBuffer, paTestData * data)
   {
     deltas.push_back(data->lastSampleFromPrevBuffer);
   }
-  DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->sampleCountAfterLastCrossing);
+  DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->deltaAfterLastCrossing);
   data->lastSampleFromPrevBuffer = deltas.back();
   Demodulate::Perform(deltas, data->bits);
 }
@@ -119,7 +119,7 @@ int main(void)
     data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;
     data.lastSampleFromPrevBuffer = -1000;
-    data.sampleCountAfterLastCrossing = -1000;
+    data.deltaAfterLastCrossing = -1000;
     numBytes = numSamples * sizeof(SAMPLE);
     data.recordedSamples = (SAMPLE *) malloc( numBytes );
     if( data.recordedSamples == NULL )
@@ -132,7 +132,7 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto done;
 
-    inputParameters.device = 2; //Pa_GetDefaultInputDevice(); /* default input device */
+    inputParameters.device = 3; //Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {
         fprintf(stderr,"Error: No default input device.\n");
         goto done;

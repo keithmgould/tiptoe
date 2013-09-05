@@ -14,7 +14,7 @@ SUITE (transcode)
     unsigned char byteInput[3] = { 0x00, 0xFF, 0x5D };
     vector<bool> transcodedBits;
     Transcode::Perform(byteInput, transcodedBits, 3);
-    bool correctBitsArr[54] =   {T,T,T,F,F,F,                       // preamble
+    bool correctBitsArr[55] =   {F,F,F,T,T,T,F,                     // preamble
                                  F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,T,   // 0x00
                                  T,F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,   // 0xFF
                                  F,T,T,F,F,T,T,F,T,F,T,F,F,T,T,F};  // 0x5D

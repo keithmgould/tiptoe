@@ -88,7 +88,7 @@ void Extract::stitch()
   if(this->preambleIndex == -1) { return; }
 
   // first, store the data after the preamble
-  int dataBeginsAt = this->preambleIndex + PREAMBLE_LENGTH;
+  // int dataBeginsAt = this->preambleIndex + PREAMBLE_LENGTH;
 }
 
 /* reverseTranscode()

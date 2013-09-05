@@ -20,6 +20,10 @@ using namespace std;
 #define BASE  (3)
 #define HIGH  (4)
 
+// semantics
+#define T (true)
+#define F (false)
+
 // local input audio samples are of type short
 typedef short SAMPLE;
 
@@ -71,7 +75,7 @@ void Transmitter::emitSound( short *out )
 {
   bool nextSinusoid = true;
   int phase = 0;
-  int mode = BASE;
+  int mode = HIGH;
   int preamble = 0;
   int bitIterator = 0;
 
@@ -100,7 +104,7 @@ void Transmitter::emitSound( short *out )
       phase += 1;
       if(phase >= VLOW_TABLE_SIZE) { nextSinusoid = true;}
     }else{
-      printf("we got to a bad place sir.\n");
+      cout << "We got to a bad place sir.  Mode = " << mode << endl;
       return;
     }
   }
@@ -153,15 +157,15 @@ int Transmitter::determineNextMode(int mode)
   // if we are finished sending data, use alternating
   // ones and zeros as filler.  Otherwise send the
   // data
-  if( this->bitIterator == this.transcodedBits.end() )
+  if( this->bitIterator == this->transcodedBits.end() )
   {
     if(mode == HIGH){
       mode = BASE;
     }else{
       mode = HIGH;
     }
-  } else{
-    if( this->bitIterator == 0)
+  }else{
+    if( *this->bitIterator == F)
     {
       mode -= 1;
     }else{
