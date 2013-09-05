@@ -37,9 +37,10 @@ SUITE (extract)
     vector<bool> testInput;
     testInput.push_back(false);
     testInput.push_back(true);
+    testInput.push_back(false); // preamble begins here
+    testInput.push_back(false);
     testInput.push_back(false);
     testInput.push_back(true);
-    testInput.push_back(true); // preamble begins here
     testInput.push_back(true);
     testInput.push_back(true);
     testInput.push_back(false);
@@ -47,7 +48,7 @@ SUITE (extract)
 
     Extract extract(testInput);
     extract.findPreamble();
-    CHECK_EQUAL(4, extract.preambleIndex);
+    CHECK_EQUAL(2, extract.preambleIndex);
   }
 
   TEST (storePostPreambleBits)

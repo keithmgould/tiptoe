@@ -50,14 +50,17 @@ Extract::Extract (vector<bool> &transmittedBits)
  */
 void Extract::findPreamble()
 {
-  for(int i = 3; i < this->transmittedBits.size(); i++)
+  for(int i = 6; i < this->transmittedBits.size(); i++)
   {
-    if( this->transmittedBits.at(i-3) == true &&
-        this->transmittedBits.at(i-2) == true &&
-        this->transmittedBits.at(i-1) == true &&
-        this->transmittedBits.at(i)   == false)
+    if( this->transmittedBits.at(i-6) == F &&
+        this->transmittedBits.at(i-5) == F &&
+        this->transmittedBits.at(i-4) == F &&
+        this->transmittedBits.at(i-3) == T &&
+        this->transmittedBits.at(i-2) == T &&
+        this->transmittedBits.at(i-1) == T &&
+        this->transmittedBits.at(i)   == F)
     {
-      this->preambleIndex = i-3;
+      this->preambleIndex = i-6;
     }
   }
 }
