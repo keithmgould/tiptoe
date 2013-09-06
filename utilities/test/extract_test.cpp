@@ -31,10 +31,10 @@ SUITE (extract)
 
     Extract extract(testInput);
     extract.findPreamble();
-    CHECK_EQUAL(-1, extract.preambleIndex);
+    CHECK_EQUAL(-1, extract.preambleBegin);
   }
 
-  TEST (findPreamble_preambleFound)
+  TEST (findPreamble_fullPreambleFound)
   {
     vector<bool> testInput;
     testInput.push_back(false);
@@ -45,12 +45,13 @@ SUITE (extract)
     testInput.push_back(true);
     testInput.push_back(true);
     testInput.push_back(true);
-    testInput.push_back(false);
+    testInput.push_back(false); // preamble ends here
     testInput.push_back(true);
 
     Extract extract(testInput);
     extract.findPreamble();
-    CHECK_EQUAL(2, extract.preambleIndex);
+    CHECK_EQUAL(2, extract.preambleBegin);
+    CHECK_EQUAL(8, extract.preambleEnd);
   }
 
   TEST (storePostPreambleBits)
@@ -71,7 +72,7 @@ SUITE (extract)
     testInput.push_back(false);
     testInput.push_back(false);
     Extract extract(testInput);
-    extract.preambleIndex = 4;
+    extract.preambleBegin = 4;
     vector<bool> correctPostBits;
     correctPostBits.push_back(true);
     correctPostBits.push_back(true);
@@ -104,7 +105,7 @@ SUITE (extract)
     testInput.push_back(false); // preamble ends here
     testInput.push_back(true);
     Extract extract(testInput);
-    extract.preambleIndex = 4;
+    extract.preambleBegin = 4;
     extract.stitch(prePreambleBits);
 
     vector<bool> correctBits;
