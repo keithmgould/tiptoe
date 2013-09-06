@@ -3,11 +3,11 @@
  * Extract's job is the opposite of Transcode's job (and then some.)
  *
  * A Frame sent over the wire has three parts:
- *   1) The preamble (1110)
- *   2) The Data (48 bits transcoded to 96 bits)
+ *   1) The preamble: 0001110
+ *   2) The Data: 96 bits (post-transcode)
  *   3) 1s and 0s alternating until the frame is complete
  *
- * Extract's job is to extract those 48 bits, in the face of noise.
+ * Extract's job is to extract those 48 (pre-transcode) bits, in the face of noise.
  *
  */
 
@@ -19,7 +19,8 @@ using namespace std;
 class Extract
 {
   public:
-  int preambleIndex;
+  int preambleBegin;
+  int preambleEnd;
   vector<bool> transmittedBits;
   vector<bool> stitchedBits;
   void findPreamble();
@@ -32,11 +33,12 @@ class Extract
 /*
  * The Constructor
  *
- * Takes the raw transmitted bits.
+ * Takes the raw transmitted bits; the entire input buffer.
  */
 Extract::Extract (vector<bool> &transmittedBits)
 {
-  this->preambleIndex = -1;
+  this->preambleBegin = -1;
+  this->preambleEnd = -1;
   this->transmittedBits = transmittedBits;
 }
 
@@ -45,8 +47,25 @@ Extract::Extract (vector<bool> &transmittedBits)
  * Searches through the raw transmittedBits for
  * the preamble.
  *
- * Function returns the index of the start of the preamble.
- * If preamble not found it returns -1.
+ * We have to consider three cases:
+ * 1) The entire preamble is found.
+ *    This can happen anywhere in the transmittedBits vector.
+ *    In this case we must stitch the data from the previous buffer and the
+ *    current buffer.
+ *
+ * 2) Only the "front" (consisting of "FFF") is found.
+ *    This can only happen at the very end of the transmittedBits vector due to
+ *    getting chopped off at the end.  This is a split preamble.  In this case
+ *    we look at where the preamble was chopped off, and search for the chopped off
+ *    segment at the beginning of the transmittedBits.  We extract starting from
+ *    the point right after the segment.
+ *
+ * 3) Only the "back" (consisting of TTTF ) is found.
+ *    This can only happen at the very beginning of the transmittedBits
+ *    vector due to getting chopped off at the very beginning. This is a
+ *    split preamble.  In this case, we know the entire 96 bits of pre-transcoded
+ *    data is in the current buffer.  We extract starting from the point right
+ *    after the end of the preamble.
  *
  */
 void Extract::findPreamble()
@@ -61,7 +80,7 @@ void Extract::findPreamble()
         this->transmittedBits.at(i-1) == T &&
         this->transmittedBits.at(i)   == F)
     {
-      this->preambleIndex = i-6;
+      this->preambleBegin = i-6;
     }
   }
 }
@@ -69,15 +88,17 @@ void Extract::findPreamble()
 /* storePostPreambleBits
  *
  * The post-preamble bits in this buffer will be used
- * in combination with the pre-preamble bits in the next buffer
+ * in combination with the pre-preamble bits in the next buffer.
+ *
+ * This is only relevant when we do not have a split preamble.
  */
 void Extract::storePostPreambleBits(vector<bool> &postPreambleBits)
 {
   // if we don't know where the preamble is, we have nothing
-  if(this->preambleIndex == -1) { return; }
+  if(this->preambleBegin == -1) { return; }
 
   // get to the end of the preamble
-  vector<bool>::iterator endOfPreamble = this->transmittedBits.begin() + this->preambleIndex + 5;
+  vector<bool>::iterator endOfPreamble = this->transmittedBits.begin() + this->preambleBegin + 5;
 
   // from end of preamble to end of transmittedBits
   postPreambleBits.assign(endOfPreamble, this->transmittedBits.end());
@@ -96,10 +117,10 @@ void Extract::storePostPreambleBits(vector<bool> &postPreambleBits)
 void Extract::stitch(vector<bool> &prePreambleBits)
 {
   // if we don't know where the preamble is, we have nothing
-  if(this->preambleIndex == -1) { return; }
+  if(this->preambleBegin == -1) { return; }
 
   // get to the end of the preamble
-  vector<bool>::iterator beginningOfPreamble = this->transmittedBits.begin() + this->preambleIndex;
+  vector<bool>::iterator beginningOfPreamble = this->transmittedBits.begin() + this->preambleBegin;
 
   // first add in the prePremable bits (the bits from after the last bufffers preamble)
   this->stitchedBits.assign(prePreambleBits.begin(), prePreambleBits.end());
