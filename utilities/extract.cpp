@@ -23,6 +23,7 @@ class Extract
   int preambleEnd;
   vector<bool> transmittedBits;
   vector<bool> stitchedBits;
+  void perform();
   void findPreamble();
   void reverseTranscode();
   void storePostPreambleBits(vector<bool> &postPreambleBits);
@@ -38,8 +39,34 @@ class Extract
 Extract::Extract (vector<bool> &transmittedBits)
 {
   this->preambleBegin = -1;
-  this->preambleEnd = -1;
+  this->preambleEnd   = -1;
   this->transmittedBits = transmittedBits;
+}
+
+/* perform()
+ *
+ * Perform runs through the steps necessary to extract the transcoded bits.
+ *
+ * Pseudo Code:
+ *
+ *  find Preamble
+ *  if entire preamble found,
+ *     rawData = stitch (data from previous buffer, data from current buffer)
+ *  else
+ *     rawData = extract based on preamble location
+ *
+ *  reverseTranscode(rawData)
+ *
+ */
+void Extract::perform()
+{
+  findPreamble();
+  if(this->preambleBegin > 0 && this->preambleEnd > 0)
+  {
+    stitch();
+  }else{
+
+  }
 }
 
 /* findPreamble()
@@ -70,17 +97,25 @@ Extract::Extract (vector<bool> &transmittedBits)
  */
 void Extract::findPreamble()
 {
-  for(int i = 6; i < this->transmittedBits.size(); i++)
+  for(int i = 2; i < this->transmittedBits.size(); i++)
   {
-    if( this->transmittedBits.at(i-6) == F &&
-        this->transmittedBits.at(i-5) == F &&
-        this->transmittedBits.at(i-4) == F &&
-        this->transmittedBits.at(i-3) == T &&
-        this->transmittedBits.at(i-2) == T &&
-        this->transmittedBits.at(i-1) == T &&
+    // search for the beginning of the preamble
+    if( this->transmittedBits.at(i-2) == F &&
+        this->transmittedBits.at(i-1) == F &&
         this->transmittedBits.at(i)   == F)
     {
-      this->preambleBegin = i-6;
+      this->preambleBegin = i-2;
+    }
+
+    // search for the end of the preamble
+    if( this->transmittedBits.at(i-2) == T &&
+        this->transmittedBits.at(i-1) == T &&
+        this->transmittedBits.at(i)   == T)
+    {
+      if( (this->transmittedBits.size() - i + 1 > 0) && this->transmittedBits.at(i+1) == F)
+      {
+        this->preambleEnd = i+1;
+      }
     }
   }
 }
@@ -110,9 +145,6 @@ void Extract::storePostPreambleBits(vector<bool> &postPreambleBits)
  * two local buffers.  Therefor to reconstruct the 96 bits we must
  * stitch the combined results of post-preamble data from the previous
  * buffer with pre-preamble data from the current buffer.
- *
- * TODO: what happens if (when) the preamble gets split between two receiving
- * buffers? Oy.
  */
 void Extract::stitch(vector<bool> &prePreambleBits)
 {
