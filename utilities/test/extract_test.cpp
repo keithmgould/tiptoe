@@ -84,7 +84,7 @@ SUITE (extract)
     CHECK(correctPostBits == postBits);
   }
 
-  TEST (stitch_with_data_from_previous_buffer)
+  TEST (stitch)
   {
     vector<bool> prePreambleBits;
     prePreambleBits.push_back(false);

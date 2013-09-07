@@ -7,7 +7,7 @@
  *   2) The Data: 96 bits (post-transcode)
  *   3) 1s and 0s alternating until the frame is complete
  *
- * Extract's job is to extract those 48 (pre-transcode) bits, in the face of noise.
+ * Extract's job is to extract those 48 (pre-transcode) bits
  *
  */
 
@@ -22,12 +22,13 @@ class Extract
   int preambleBegin;
   int preambleEnd;
   vector<bool> transmittedBits;
-  vector<bool> stitchedBits;
+
+  // methods
   void perform();
   void findPreamble();
   void reverseTranscode();
   void storePostPreambleBits(vector<bool> &postPreambleBits);
-  void stitch(vector<bool> &prePreambleBits);
+  vector<bool> stitch(vector<bool> &prePreambleBits);
   Extract (vector<bool> &transmittedBits); // constructor
 };
 
@@ -63,7 +64,7 @@ void Extract::perform()
   findPreamble();
   if(this->preambleBegin > 0 && this->preambleEnd > 0)
   {
-    stitch();
+    vector<bool> transcodedBits = stitch();
   }else{
 
   }
@@ -146,7 +147,7 @@ void Extract::storePostPreambleBits(vector<bool> &postPreambleBits)
  * stitch the combined results of post-preamble data from the previous
  * buffer with pre-preamble data from the current buffer.
  */
-void Extract::stitch(vector<bool> &prePreambleBits)
+vector<bool> Extract::stitch(vector<bool> &prePreambleBits)
 {
   // if we don't know where the preamble is, we have nothing
   if(this->preambleBegin == -1) { return; }
