@@ -54,9 +54,9 @@ void Extract::perform(vector<bool> &extractedBits, vector<bool> &remainingBits)
   pair <int, int> preambleIndexes = findPreambles();
   vector<bool>::iterator firstIndexAt;
   vector<bool>::iterator secondIndexAt;
-  if(preambleIndexes.first > 0)
+  if(preambleIndexes.first >= 0)
   {
-    if(preambleIndexes.second > 0)
+    if(preambleIndexes.second >= 0)
     {
       firstIndexAt = this->totalRawBits.begin() + preambleIndexes.first;
       secondIndexAt = this->totalRawBits.begin() + preambleIndexes.second;

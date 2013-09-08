@@ -5,8 +5,11 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include "../utilities/constants.cpp"
 #include "../utilities/delta_finder.cpp"
 #include "../utilities/demodulate.cpp"
+#include "../utilities/extract.cpp"
+#include "../utilities/reverse_transcode.cpp"
 
 #define SAMPLE_RATE  (32000)
 #define FRAMES_PER_BUFFER (1280)
@@ -34,6 +37,7 @@ typedef struct
     SAMPLE      lastSampleFromPrevBuffer;       // helps with demodulation
     float       deltaAfterLastCrossing;         // used to keep track of the delta between buffers
     vector<bool> bits;                          // hold the data post demodulation
+    vector<bool> remainingBits;
 
 }
 paTestData;
@@ -50,7 +54,18 @@ void demodulator(const void * inputBuffer, paTestData * data)
   }
   DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->deltaAfterLastCrossing);
   data->lastSampleFromPrevBuffer = deltas.back();
-  Demodulate::Perform(deltas, data->bits);
+  vector<bool> demodulatedBits;
+  Demodulate::Perform(deltas, demodulatedBits);
+  Extract extract(demodulatedBits, data->remainingBits);
+  vector<bool> extractedBits;
+  extract.perform(extractedBits, data->remainingBits);
+  ReverseTranscode reverse_transcode(extractedBits, 48);
+  vector<bool> dataBits;
+  reverse_transcode.perform(dataBits);
+  if(dataBits.size() > 0)
+  {
+    data->bits.insert(data->bits.end(), dataBits.begin(), dataBits.end());
+  }
 }
 
 static int recordCallback( const void *inputBuffer, void *outputBuffer,

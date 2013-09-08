@@ -11,14 +11,16 @@ using namespace std;
 class ReverseTranscode
 {
   public:
+  int maxBits;
   vector<bool> extractedBits;
-  ReverseTranscode(vector<bool> &extractedBits);
+  ReverseTranscode(vector<bool> &extractedBits, int maxBits);
   void perform(vector<bool> &dataBits);
 };
 
-ReverseTranscode::ReverseTranscode(vector<bool> &extractedBits)
+ReverseTranscode::ReverseTranscode(vector<bool> &extractedBits, int maxBits)
 {
   this->extractedBits = extractedBits;
+  this->maxBits = maxBits;
 }
 
 void ReverseTranscode::perform(vector<bool> &dataBits)
@@ -32,6 +34,7 @@ void ReverseTranscode::perform(vector<bool> &dataBits)
     if(skip == false)
     {
       dataBits.push_back(*it);
+      if(dataBits.size() == maxBits) { break; }
     }else{
       skip = false;
     }
