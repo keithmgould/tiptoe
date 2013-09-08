@@ -2,29 +2,11 @@
 #include <vector>
 #include <map>
 
-#ifndef M_PI
-#define M_PI  (3.14159265) // as determined with a nail, twine and chalk.
-#endif
-
 using namespace std;
 
 // The number of samples per frequency mode
 // TODO: its not great that these numbers are
 //       dissasociated with the sample frequency.
-#define VLOW_TABLE_SIZE   (14)
-#define LOW_TABLE_SIZE    (13)
-#define BASE_TABLE_SIZE   (12)
-#define HIGH_TABLE_SIZE   (11)
-
-// the various frequency modes
-#define VLOW  (1)
-#define LOW   (2)
-#define BASE  (3)
-#define HIGH  (4)
-
-// semantics
-#define T (true)
-#define F (false)
 
 // local input audio samples are of type short
 typedef short SAMPLE;
@@ -54,10 +36,11 @@ class Transmitter {
 Transmitter::Transmitter (int framesPerBuffer)
 {
   this->framesPerBuffer = framesPerBuffer;
-  this->tContainer.waveformSizes[VLOW] = VLOW_TABLE_SIZE;
-  this->tContainer.waveformSizes[LOW] = LOW_TABLE_SIZE;
-  this->tContainer.waveformSizes[BASE] = BASE_TABLE_SIZE;
-  this->tContainer.waveformSizes[HIGH] = HIGH_TABLE_SIZE;
+  this->tContainer.waveformSizes[PREAMBLE_LOW] = PREAMBLE_LOW_TABLE_SIZE;
+  this->tContainer.waveformSizes[EDGE_LOW] = EDGE_LOW_TABLE_SIZE;
+  this->tContainer.waveformSizes[MIDDLE_LOW] = MIDDLE_LOW_TABLE_SIZE;
+  this->tContainer.waveformSizes[MIDDLE_HIGH] = MIDDLE_HIGH_TABLE_SIZE;
+  this->tContainer.waveformSizes[EDGE_HIGH] = EDGE_HIGH_TABLE_SIZE;
   buildWaveforms();
 }
 
@@ -74,9 +57,9 @@ void Transmitter::setBits ( vector<bool> &transcodedBits )
 */
 void Transmitter::emitSound( short *out )
 {
-  bool nextSinusoid = true;
+  bool nextSinusoid = false;
   int phase = 0;
-  int mode = HIGH;
+  int mode = PREAMBLE_LOW;
 
   for(int i=0; i < this->framesPerBuffer; i++ )
   {
@@ -134,10 +117,10 @@ int Transmitter::determineNextMode(int mode)
   // data
   if( this->bitIterator == this->transcodedBits.end() )
   {
-    if(mode == HIGH){
-      mode = BASE;
+    if(mode == MIDDLE_HIGH){
+      mode = MIDDLE_LOW;
     }else{
-      mode = HIGH;
+      mode = MIDDLE_HIGH;
     }
   }else{
     if( *this->bitIterator == F)
@@ -149,7 +132,7 @@ int Transmitter::determineNextMode(int mode)
     this->bitIterator++;
   }
 
-  // if(this->tContainer.waveformSizes[mode] == NULL)
+  // if(!this->tContainer.waveformSizes.find(mode))
   // {
     // cout << "We got to a bad place sir.  Mode = " << mode << endl;
     // return;

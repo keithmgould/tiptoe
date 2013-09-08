@@ -1,134 +1,121 @@
 #include <UnitTest++.h>
+#include <iostream>
 #include "../extract.cpp"
-#define T (true)
-#define F (false)
 
 SUITE (extract)
 {
-  TEST (constructor)
+  TEST (constructor_with_empty_previousRawBits)
   {
-    vector<bool> transmittedBits;
-    transmittedBits.push_back(true);
-    transmittedBits.push_back(false);
-    Extract extract(transmittedBits);
+    bool newBitsArr[10] = {T,T,T,F,F,F,T,T,T,F};
+    vector<bool> newRawBits (newBitsArr, newBitsArr + sizeof(newBitsArr) / sizeof(bool) );
+    vector<bool> totalRawBits (newBitsArr, newBitsArr + sizeof(newBitsArr) / sizeof(bool) );
+    vector<bool> previousRawBits;
 
-    CHECK_EQUAL(extract.transmittedBits.at(0), true);
-    CHECK_EQUAL(extract.transmittedBits.at(1), false);
+    Extract extract(newRawBits, previousRawBits);
+    CHECK(totalRawBits == extract.totalRawBits);
   }
 
-  TEST (findPreamble_preambleNotFound)
+  TEST (constructor_with_populated_previousRawBits)
   {
-    vector<bool> testInput;
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(false);
-    testInput.push_back(true);
+    bool newBitsArr[10] = {T,T,T,F,F,F,T,T,T,F};
+    vector<bool> newRawBits (newBitsArr, newBitsArr + sizeof(newBitsArr) / sizeof(bool) );
 
-    Extract extract(testInput);
-    extract.findPreamble();
-    CHECK_EQUAL(-1, extract.preambleBegin);
+    bool prevBitsArr[6] = {F,F,F,F,T,F};
+    vector<bool> prevRawBits (prevBitsArr, prevBitsArr + sizeof(prevBitsArr) / sizeof(bool) );
+
+    bool totalBitsArr[16] = {F,F,F,F,T,F,T,T,T,F,F,F,T,T,T,F};
+    vector<bool> totalRawBits (totalBitsArr, totalBitsArr + sizeof(totalBitsArr) / sizeof(bool) );
+
+    Extract extract(newRawBits, prevRawBits);
+    CHECK(totalRawBits == extract.totalRawBits);
   }
 
-  TEST (findPreamble_fullPreambleFound)
+  TEST (findPreambles_with_no_preambles)
   {
-    vector<bool> testInput;
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(false); // preamble begins here
-    testInput.push_back(false);
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(false); // preamble ends here
-    testInput.push_back(true);
-
-    Extract extract(testInput);
-    extract.findPreamble();
-    CHECK_EQUAL(2, extract.preambleBegin);
-    CHECK_EQUAL(8, extract.preambleEnd);
+    bool totalBitsArr[20] = {F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,T};
+    vector<bool> totalRawBits (totalBitsArr, totalBitsArr + sizeof(totalBitsArr) / sizeof(bool) );
+    vector<bool> foo;
+    Extract extract(foo, foo);
+    extract.totalRawBits = totalRawBits;
+    pair <int, int> preambleIndexes = extract.findPreambles();
+    CHECK_EQUAL(-1, preambleIndexes.first);
+    CHECK_EQUAL(-1, preambleIndexes.second);
   }
 
-  TEST (storePostPreambleBits)
+  TEST (findPreambles_with_1_preamble)
   {
-    vector<bool> testInput;
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(false); // preamble begins here
-    testInput.push_back(false);
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(false); // preamble ends here
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(false);
-    testInput.push_back(false);
-    Extract extract(testInput);
-    extract.preambleBegin = 4;
-    vector<bool> correctPostBits;
-    correctPostBits.push_back(true);
-    correctPostBits.push_back(true);
-    correctPostBits.push_back(true);
-    correctPostBits.push_back(false);
-    correctPostBits.push_back(false);
-    vector<bool> postBits;
-    extract.storePostPreambleBits(postBits);
-    CHECK(correctPostBits == postBits);
+    bool totalBitsArr[20] = {F,T,F,T,T,T,T,F,F,T,F,T,F,T,F,T,F,T,F,T};
+    vector<bool> totalRawBits (totalBitsArr, totalBitsArr + sizeof(totalBitsArr) / sizeof(bool) );
+    vector<bool> foo;
+    Extract extract(foo, foo);
+    extract.totalRawBits = totalRawBits;
+    pair <int, int> preambleIndexes = extract.findPreambles();
+    CHECK_EQUAL( 3, preambleIndexes.first);
+    CHECK_EQUAL(-1, preambleIndexes.second);
   }
 
-  TEST (stitch)
+  TEST (findPreambles_with_2_preambles)
   {
-    vector<bool> prePreambleBits;
-    prePreambleBits.push_back(false);
-    prePreambleBits.push_back(true);
-    prePreambleBits.push_back(true);
-
-    vector<bool> testInput;
-    testInput.push_back(false);
-    testInput.push_back(false);
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(false); // preamble begins here
-    testInput.push_back(false);
-    testInput.push_back(false);
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(true);
-    testInput.push_back(false); // preamble ends here
-    testInput.push_back(true);
-    Extract extract(testInput);
-    extract.preambleBegin = 4;
-    extract.stitch(prePreambleBits);
-
-    vector<bool> correctBits;
-    // these are the postPreamable bits from last buffer
-    correctBits.push_back(false);
-    correctBits.push_back(true);
-    correctBits.push_back(true);
-    // these are the pre-preamble bits from this buffer
-    correctBits.push_back(false);
-    correctBits.push_back(false);
-    correctBits.push_back(false);
-    correctBits.push_back(true);
-
-    CHECK(correctBits == extract.stitchedBits);
+    bool totalBitsArr[20] = {F,T,F,T,T,T,T,F,F,T,F,T,F,T,F,T,T,T,T,F};
+    vector<bool> totalRawBits (totalBitsArr, totalBitsArr + sizeof(totalBitsArr) / sizeof(bool) );
+    vector<bool> foo;
+    Extract extract(foo, foo);
+    extract.totalRawBits = totalRawBits;
+    pair <int, int> preambleIndexes = extract.findPreambles();
+    CHECK_EQUAL( 3, preambleIndexes.first);
+    CHECK_EQUAL(15, preambleIndexes.second);
   }
 
-  TEST (stitch_where_preamble_split_between_buffers)
+  TEST (perform_with_no_preamble_indexes)
   {
-    CHECK_EQUAL(1,1);
+    bool totalBitsArr[20] = {F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,T};
+    vector<bool> totalRawBits (totalBitsArr, totalBitsArr + sizeof(totalBitsArr) / sizeof(bool) );
+    vector<bool> extractedRawBits;
+    vector<bool> remainingRawBits;
+    vector<bool> foo;
+    Extract extract(foo, foo);
+    extract.totalRawBits = totalRawBits;
+    extract.perform(extractedRawBits, remainingRawBits);
+    CHECK(extractedRawBits.size() == 0);
+    CHECK(totalRawBits == remainingRawBits);
   }
 
-  TEST (reverseTranscode)
+  TEST (perform_with_1_preamble_indexes)
   {
-    CHECK_EQUAL(1,1);
+    bool totalBitsArr[20] = {F,T,F,T,F,T,T,T,T,F,F,T,F,T,F,T,F,T,F,T};
+    vector<bool> totalRawBits (totalBitsArr, totalBitsArr + sizeof(totalBitsArr) / sizeof(bool) );
+
+    bool correctBitsArr[15] = {T,T,T,T,F,F,T,F,T,F,T,F,T,F,T};
+    vector<bool> correctBits (correctBitsArr, correctBitsArr + sizeof(correctBitsArr) / sizeof(bool) );
+
+    vector<bool> extractedRawBits;
+    vector<bool> remainingRawBits;
+    vector<bool> foo;
+    Extract extract(foo, foo);
+    extract.totalRawBits = totalRawBits;
+    extract.perform(extractedRawBits, remainingRawBits);
+    CHECK(extractedRawBits.size() == 0);
+    CHECK(correctBits == remainingRawBits);
+  }
+
+  TEST (perform_with_2_preamble_indexes)
+  {
+    bool totalBitsArr[24] = {F,T,F,T,F,T,T,T,T,F,F,T,F,T,F,T,T,T,T,F,T,F,F,F};
+    vector<bool> totalRawBits (totalBitsArr, totalBitsArr + sizeof(totalBitsArr) / sizeof(bool) );
+
+    bool correctBitsArr[5] = {F,T,F,T,F};
+    vector<bool> correctExtractedBits (correctBitsArr, correctBitsArr + sizeof(correctBitsArr) / sizeof(bool) );
+
+    bool correctRemainingBitsArr[9] = {T,T,T,T,F,T,F,F,F};
+    vector<bool> correctRemainingBits (correctRemainingBitsArr, correctRemainingBitsArr + sizeof(correctRemainingBitsArr) / sizeof(bool) );
+
+    vector<bool> extractedRawBits;
+    vector<bool> remainingRawBits;
+    vector<bool> foo;
+    Extract extract(foo, foo);
+    extract.totalRawBits = totalRawBits;
+    extract.perform(extractedRawBits, remainingRawBits);
+    CHECK(correctExtractedBits == extractedRawBits);
+    CHECK(correctRemainingBits == remainingRawBits);
   }
 }

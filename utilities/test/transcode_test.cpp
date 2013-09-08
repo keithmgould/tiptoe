@@ -14,10 +14,12 @@ SUITE (transcode)
     unsigned char byteInput[3] = { 0x00, 0xFF, 0x5D };
     vector<bool> transcodedBits;
     Transcode::Perform(byteInput, transcodedBits, 3);
-    bool correctBitsArr[55] =   {F,F,F,T,T,T,F,                     // preamble
-                                 F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,T,   // 0x00
-                                 T,F,T,F,T,F,T,F,T,F,T,F,T,F,T,F,   // 0xFF
-                                 F,T,T,F,F,T,T,F,T,F,T,F,F,T,T,F};  // 0x5D
+    bool correctBitsArr[45] =   {T,T,T,T,F,                     // preamble
+                                 F,F,T,F,T,F,T,F,T,F,T,F,T,F,T, // 0x00
+                                 T,T,F,T,F,T,F,T,F,T,F,T,F,T,F, // 0xFF
+                                 F,T,F,T,T,F,T,F,F,T};          // 0x5D
+
+
     vector<bool> correctBits (correctBitsArr, correctBitsArr + sizeof(correctBitsArr) / sizeof(bool) );
     CHECK(correctBits == transcodedBits);
   }
