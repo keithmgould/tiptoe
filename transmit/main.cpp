@@ -3,6 +3,7 @@
 #include <csignal>
 #include <fstream>
 #include "portaudio.h"
+#include "../utilities/constants.cpp"
 #include "../utilities/transcode.cpp"
 #include "../utilities/transmit.cpp"
 
@@ -23,8 +24,6 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
   (void) inputBuffer;
 
   // 6 bytes (48 bits) will come from Codec2 so faux input: 6 random bytes
-  // which when transcoded becomes:
-  // 101001100101101010011001100101100110011010100110010110011010011010011010101001011001011001100101
   unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 };
   vector<bool> transcodedBits;
   Transcode::Perform(faux, transcodedBits, 6);
