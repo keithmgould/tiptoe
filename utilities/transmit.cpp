@@ -1,4 +1,6 @@
 #include <math.h>
+#include <vector>
+#include <map>
 
 #ifndef M_PI
 #define M_PI  (3.14159265) // as determined with a nail, twine and chalk.
@@ -27,15 +29,13 @@ using namespace std;
 // local input audio samples are of type short
 typedef short SAMPLE;
 
-// holds the waveforms
+// holds the tContainer
 typedef struct
 {
-  SAMPLE base_sine[BASE_TABLE_SIZE];
-  SAMPLE high_sine[HIGH_TABLE_SIZE];
-  SAMPLE low_sine[LOW_TABLE_SIZE];
-  SAMPLE vlow_sine[VLOW_TABLE_SIZE];
+  map<int, vector<SAMPLE> > waveforms;
+  map<int, int> waveformSizes;
 }
-waveformContainer;
+transmitContainer;
 
 class Transmitter {
   vector<bool> transcodedBits;
@@ -46,7 +46,7 @@ class Transmitter {
   public:
   void emitSound(short *out );
   void setBits(vector<bool> &transcodedBits);
-  waveformContainer waveforms;
+  transmitContainer tContainer;
   Transmitter (int framesPerBuffer);
 };
 
@@ -54,6 +54,10 @@ class Transmitter {
 Transmitter::Transmitter (int framesPerBuffer)
 {
   this->framesPerBuffer = framesPerBuffer;
+  this->tContainer.waveformSizes[VLOW] = VLOW_TABLE_SIZE;
+  this->tContainer.waveformSizes[LOW] = LOW_TABLE_SIZE;
+  this->tContainer.waveformSizes[BASE] = BASE_TABLE_SIZE;
+  this->tContainer.waveformSizes[HIGH] = HIGH_TABLE_SIZE;
   buildWaveforms();
 }
 
@@ -62,21 +66,17 @@ void Transmitter::setBits ( vector<bool> &transcodedBits )
 {
   this->transcodedBits = transcodedBits;
   this->bitIterator = this->transcodedBits.begin();
-  // this->transcodedBits.push_back(true);
 }
 
 /*
   Emit Sound
   This function places the proper sinusoids in the output buffer
-  TODO: Refactor
 */
 void Transmitter::emitSound( short *out )
 {
   bool nextSinusoid = true;
   int phase = 0;
   int mode = HIGH;
-  int preamble = 0;
-  int bitIterator = 0;
 
   for(int i=0; i < this->framesPerBuffer; i++ )
   {
@@ -86,26 +86,9 @@ void Transmitter::emitSound( short *out )
       nextSinusoid = false;
       phase = 0;
     }
-    if (mode == HIGH){
-      *out++ = this->waveforms.high_sine[phase];
-      phase += 1;
-      if(phase >= HIGH_TABLE_SIZE) { nextSinusoid = true;}
-    }else if(mode == BASE){
-      *out++ = this->waveforms.base_sine[phase];
-      phase += 1;
-      if(phase >= BASE_TABLE_SIZE) { nextSinusoid = true;}
-    }else if(mode == LOW){
-      *out++ = this->waveforms.low_sine[phase];
-      phase += 1;
-      if(phase >= LOW_TABLE_SIZE) { nextSinusoid = true;}
-    }else if(mode == VLOW){
-      *out++ = this->waveforms.vlow_sine[phase];
-      phase += 1;
-      if(phase >= VLOW_TABLE_SIZE) { nextSinusoid = true;}
-    }else{
-      cout << "We got to a bad place sir.  Mode = " << mode << endl;
-      return;
-    }
+
+    *out++ = this->tContainer.waveforms[mode].at(phase++);
+    if(phase >= this->tContainer.waveformSizes[mode]) { nextSinusoid = true;}
   }
 }
 
@@ -113,30 +96,23 @@ void Transmitter::emitSound( short *out )
    Build Wave Forms
    Builds the waveforms used to generate sound.
    This is done using the standard definition of sine, and then converted
-   into a type short with the multiplication of 32767.
-   TODO: refactor
+   into a type short via multiplication of 32767.
 */
 void Transmitter::buildWaveforms()
 {
   int i;
-  for( i=0; i<BASE_TABLE_SIZE; i++ )
-  {
-    this->waveforms.base_sine[i] = (SAMPLE) (sin( ((double)i/(double)BASE_TABLE_SIZE) * M_PI * 2.0) * 32767);
-  }
 
-  for( i=0; i<HIGH_TABLE_SIZE; i++ )
-  {
-    this->waveforms.high_sine[i] = (SAMPLE) (sin( ((double)i/(double)HIGH_TABLE_SIZE) * M_PI * 2.0) * 32767);
-  }
+  map<int,int>::iterator it = this->tContainer.waveformSizes.begin();
+  SAMPLE sample;
 
-  for( i=0; i<LOW_TABLE_SIZE; i++ )
+  // for each waveform size
+  for(;it != this->tContainer.waveformSizes.end(); it++)
   {
-    this->waveforms.low_sine[i] = (SAMPLE) (sin( ((double)i/(double)LOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
-  }
-
-  for( i=0; i<VLOW_TABLE_SIZE; i++ )
-  {
-    this->waveforms.vlow_sine[i] = (SAMPLE) (sin( ((double)i/(double)VLOW_TABLE_SIZE) * M_PI * 2.0) * 32767);
+    for( i=0; i< it->second; i++ )
+    {
+      sample = (SAMPLE) (sin( ((double)i/(double) it->second) * M_PI * 2.0) * 32767);
+      this->tContainer.waveforms[it->first].push_back(sample);
+    }
   }
 }
 
@@ -172,5 +148,12 @@ int Transmitter::determineNextMode(int mode)
     }
     this->bitIterator++;
   }
+
+  // if(this->tContainer.waveformSizes[mode] == NULL)
+  // {
+    // cout << "We got to a bad place sir.  Mode = " << mode << endl;
+    // return;
+  // }
+
   return mode;
 };
