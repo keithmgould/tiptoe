@@ -3,6 +3,12 @@
 #include "../utilities/constants.cpp"
 #include "../utilities/transcode.cpp"
 
+/*
+ * Simple script to print out what the transcode of data would be.
+ *
+ * Use this in case you quickly want to see what bytes would
+ * transcode to...
+ */
 int main()
 {
 

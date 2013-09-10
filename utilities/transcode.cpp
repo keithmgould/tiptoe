@@ -1,5 +1,6 @@
 #include <bitset>
 #include <vector>
+#include <iostream>
 using namespace std;
 
 /* Transcode
@@ -19,12 +20,14 @@ class Transcode {
     transcodedBits.push_back(F);
 
     int frequency = MIDDLE_HIGH;
+    cout << endl << "byte count: " << byteCount << " - ";
     for(int i = 0; i < byteCount; i++)
     {
       bitset<8> bits = bitset<8>(inputBytes[i]);
       for(int j=7; j >=0; j--)
       {
         // Here we have a direct mapping between input and output
+        cout << bits[j];
         if(bits[j] == 1)
         {
           transcodedBits.push_back(T);

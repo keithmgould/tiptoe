@@ -49,7 +49,8 @@ typedef short SAMPLE;
 
 /*----------------------------------------------------------------
  * Callback Data.  Persists across buffers.  Used here to hold on
- * to large objects that take time to instantiate.
+ * to large objects that take time to instantiate.  The Transmitter
+ * stores the waveforms, for example.
  */
 typedef struct
 {
@@ -65,8 +66,8 @@ callbackData;
  * localToRemoteCallback's job is to take local audio and:
  * 0) receive - using portaudio, receive audio from microphone
  * 1) compress - using codec2
- * 2) encrypt - using AES256
- * 3) modulate - using IncDec (see "Hermes: Data Transmission over Unknown Voice Channels")
+ * 2) encrypt - using AES256, NOT IMPLEMENTED YET
+ * 3) modulate - using modified IncDec
  * 4) emit - using portaudio, emit modulated data to speakers
  */
 
