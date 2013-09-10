@@ -48,5 +48,10 @@ void ReverseTranscode::perform(vector<bool> &dataBits)
       if(frequency == EDGE_LOW) { skip = true; }
     }
   }
+  for(int i = 0; i< dataBits.size(); i++)
+  {
+    cout << dataBits.at(i);
+  }
+  cout << endl;
 }
 

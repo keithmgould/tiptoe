@@ -103,7 +103,6 @@ static int remoteToLocalCallback( const void *inputBuffer, void *outputBuffer, u
     }else{
       vector<bool> bits;
       demodulator(inputBuffer, data, bits);
-      // convert vector<bool>bits to unsigned char*
       unsigned char *charlie = (unsigned char *) &bits;
       codec2_decode(data->codec2, out, charlie);
     }
