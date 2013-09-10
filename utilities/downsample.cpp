@@ -8,7 +8,7 @@ class Downsample
     {
       if((i % downsampleRate) == 0)
       {
-        outputSamples[outputIndex++] = i;
+        outputSamples[outputIndex++] = inputSamples[i];
       }
     }
   }
