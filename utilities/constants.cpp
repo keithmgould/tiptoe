@@ -25,4 +25,4 @@
 // 0 : show nothing
 // 1 : show only data
 // 2 : show data and more
-#define DEBUG_MODE (1)
+#define DEBUG_MODE (2)

@@ -35,7 +35,7 @@ typedef struct
     float       timeAfterLastBuffersLastCrossing; // used to keep track of the delta between buffers
     float       lastBuffersLastDelta;
     float       lastBuffersLastSample;
-    vector<bool> bits;                            // hold the data post demodulation
+    vector < vector<bool> > bits;                 // hold the data for testing
     vector<bool> remainingBits;
 
 }
@@ -49,7 +49,7 @@ void demodulator(const void * inputBuffer, paTestData * data)
   {
     inputSamples.push_back(data->lastBuffersLastSample);
   }
-  inputSamples.insert(inputSamples.begin(), floatInputBuffer, floatInputBuffer + FRAMES_PER_BUFFER);
+  inputSamples.insert(inputSamples.end(), floatInputBuffer, floatInputBuffer + FRAMES_PER_BUFFER);
   vector<float>deltas;
   if (data->lastBuffersLastDelta != -1000)
   {
@@ -66,10 +66,7 @@ void demodulator(const void * inputBuffer, paTestData * data)
   ReverseTranscode reverse_transcode(extractedBits, 48);
   vector<bool> dataBits;
   reverse_transcode.perform(dataBits);
-  if(dataBits.size() > 0)
-  {
-    data->bits.insert(data->bits.end(), dataBits.begin(), dataBits.end());
-  }
+  if(dataBits.size() > 0) { data->bits.push_back(dataBits); }
 }
 
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
@@ -190,14 +187,13 @@ int main(void)
 
     if(DEBUG_MODE > 0)
     {
-      vector<bool>::iterator it;
-      int counter = 0;
-      cout << "received data:" << endl;
-      for(it = data.bits.begin(); it != data.bits.end(); it++)
+      for(int i=0; i < data.bits.size(); i++)
       {
-        counter++;
-        cout << *it;
-        if(counter % 48 == 0){cout << endl;}
+        for(int j=0; j < data.bits.at(i).size(); j++)
+        {
+          cout << data.bits.at(i).at(j);
+        }
+        cout << endl;
       }
     }
 
