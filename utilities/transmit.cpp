@@ -60,11 +60,12 @@ void Transmitter::emitSound( short *out )
   bool nextSinusoid = false;
   int phase = 0;
   int mode = PREAMBLE_LOW;
-
+  // cout << "mod:";
   for(int i=0; i < this->framesPerBuffer; i++ )
   {
     if(nextSinusoid)
     {
+      // cout << mode;
       mode = this->determineNextMode(mode);
       nextSinusoid = false;
       phase = 0;
@@ -73,6 +74,7 @@ void Transmitter::emitSound( short *out )
     *out++ = this->tContainer.waveforms[mode].at(phase++);
     if(phase >= this->tContainer.waveformSizes[mode]) { nextSinusoid = true;}
   }
+  // cout << endl << endl;
 }
 
 /*

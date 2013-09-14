@@ -29,8 +29,10 @@ void ReverseTranscode::perform(vector<bool> &dataBits)
   vector<bool>::iterator it = this->extractedBits.begin();
   int frequency = MIDDLE_HIGH;
   bool skip = false;
+  if(DEBUG_MODE > 1) { cout << "ext:"; }
   for(; it != this->extractedBits.end(); it++)
   {
+    if(DEBUG_MODE > 1) { cout << *it; }
     if(skip == false)
     {
       dataBits.push_back(*it);
@@ -48,10 +50,15 @@ void ReverseTranscode::perform(vector<bool> &dataBits)
       if(frequency == EDGE_LOW) { skip = true; }
     }
   }
-  for(int i = 0; i< dataBits.size(); i++)
+  if(DEBUG_MODE > 1) { cout << endl; }
+  if(DEBUG_MODE > 0)
   {
-    cout << dataBits.at(i);
+    for(int i = 0; i< dataBits.size(); i++)
+    {
+      cout << dataBits.at(i);
+    }
+    cout << endl;
   }
-  cout << endl;
+  if(DEBUG_MODE > 1) { cout << endl; }
 }
 

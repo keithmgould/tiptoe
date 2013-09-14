@@ -39,8 +39,8 @@
  * Note however that when we feed the audo to Codec2, we first
  * downstample to 8kHz, which yields 320 frames per buffer
  */
-#define SAMPLE_RATE  (32000)
-#define FRAMES_PER_BUFFER (1280)
+#define SAMPLE_RATE  (16000)
+#define FRAMES_PER_BUFFER (640)
 
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
@@ -80,11 +80,18 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
   }
   DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->deltaAfterLastCrossing);
   data->lastSampleFromPrevBuffer = deltas.back();
+
+  // take the different time deltas between sinusoids and turn them into 1s and 0s
+  // based on the IncDec algorithm.
   vector<bool> demodulatedBits;
   Demodulate::Perform(deltas, demodulatedBits);
+
+  // Stitch the raw data together across buffers
   Extract extract(demodulatedBits, data->remainingBits);
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
+
+  // Reverse transcode:
   ReverseTranscode reverse_transcode(extractedBits, 48);
   reverse_transcode.perform(bits);
 }
@@ -103,8 +110,8 @@ static int remoteToLocalCallback( const void *inputBuffer, void *outputBuffer, u
     }else{
       vector<bool> bits;
       demodulator(inputBuffer, data, bits);
-      unsigned char *charlie = (unsigned char *) &bits;
-      codec2_decode(data->codec2, out, charlie);
+      // unsigned char *charlie = (unsigned char *) &bits;
+      // codec2_decode(data->codec2, out, charlie);
     }
     return paContinue;
 }

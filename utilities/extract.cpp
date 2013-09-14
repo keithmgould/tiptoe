@@ -43,6 +43,20 @@ class Extract
  */
 Extract::Extract (vector<bool> &newRawBits, vector<bool> &previousRawBits)
 {
+  if(DEBUG_MODE > 1)
+  {
+    cout << "prv:";
+    for(int i = 0; i< previousRawBits.size(); i++)
+    {
+      cout << previousRawBits.at(i);
+    }
+    cout << endl << "new:";
+    for(int i = 0; i< newRawBits.size(); i++)
+    {
+      cout << newRawBits.at(i);
+    }
+    cout << endl;
+  }
   this->totalRawBits = previousRawBits;
   this->totalRawBits.insert(this->totalRawBits.end(), newRawBits.begin(), newRawBits.end());
 }

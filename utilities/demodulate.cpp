@@ -7,7 +7,7 @@
   for each sinusoid in the input sound signal
     fcurr = current sinusoid frequency
     fprev = previous sinusoid frequency
-    if fcurr > fprev
+    if fcurr >= fprev
       output 1
     else
       output 0
@@ -15,7 +15,14 @@
   end
 
   We are receiving the time deltas, which means
-  the higher the delta, the lower the frequency
+  the higher the delta, the lower the frequency,
+  which means the pseudo code becomes:
+
+  if deltaCurr < deltaPrev
+    output 1
+  else
+    output 0
+  end
 
   Arguments:
     deltas: time deltas between sinusoids

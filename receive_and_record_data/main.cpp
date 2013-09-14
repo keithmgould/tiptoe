@@ -20,23 +20,22 @@
 #define WRITE_TO_FILE   (1)
 
 /* Select sample format. */
-#if 1
 #define PA_SAMPLE_TYPE  paFloat32
 typedef float SAMPLE;
 #define SAMPLE_SILENCE  (0.0f)
 #define PRINTF_S_FORMAT "%.8f"
-#endif
 
 using namespace std;
 
 typedef struct
 {
-    int         frameIndex;                     //Index into sample array
+    int         frameIndex;                       //Index into sample array
     int         maxFrameIndex;
-    SAMPLE      *recordedSamples;               // holds actual floating point audio samples.  not needed
-    SAMPLE      lastSampleFromPrevBuffer;       // helps with demodulation
-    float       deltaAfterLastCrossing;         // used to keep track of the delta between buffers
-    vector<bool> bits;                          // hold the data post demodulation
+    SAMPLE      *recordedSamples;                 // holds actual floating point audio samples.  not needed
+    float       timeAfterLastBuffersLastCrossing; // used to keep track of the delta between buffers
+    float       lastBuffersLastDelta;
+    float       lastBuffersLastSample;
+    vector<bool> bits;                            // hold the data post demodulation
     vector<bool> remainingBits;
 
 }
@@ -45,15 +44,20 @@ paTestData;
 void demodulator(const void * inputBuffer, paTestData * data)
 {
   float * floatInputBuffer = (float *) inputBuffer;
-  vector<float>deltas;
-  // add the last sample, in case it was below zero and the first sample of the
-  // current buffer is above zero.  Otherwise we miss a crossing point.
-  if (data->lastSampleFromPrevBuffer != -1000)
+  vector<float>inputSamples;
+  if(data->lastBuffersLastSample != -1000)
   {
-    deltas.push_back(data->lastSampleFromPrevBuffer);
+    inputSamples.push_back(data->lastBuffersLastSample);
   }
-  DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->deltaAfterLastCrossing);
-  data->lastSampleFromPrevBuffer = deltas.back();
+  inputSamples.insert(inputSamples.begin(), floatInputBuffer, floatInputBuffer + FRAMES_PER_BUFFER);
+  vector<float>deltas;
+  if (data->lastBuffersLastDelta != -1000)
+  {
+    deltas.push_back(data->lastBuffersLastDelta);
+  }
+  DeltaFinder::Perform(inputSamples, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->timeAfterLastBuffersLastCrossing);
+  data->lastBuffersLastDelta = deltas.back();
+  data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
   vector<bool> demodulatedBits;
   Demodulate::Perform(deltas, demodulatedBits);
   Extract extract(demodulatedBits, data->remainingBits);
@@ -133,8 +137,9 @@ int main(void)
 
     data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;
-    data.lastSampleFromPrevBuffer = -1000;
-    data.deltaAfterLastCrossing = -1000;
+    data.timeAfterLastBuffersLastCrossing = -1000;
+    data.lastBuffersLastDelta = -1000;
+    data.lastBuffersLastSample = -1000;
     numBytes = numSamples * sizeof(SAMPLE);
     data.recordedSamples = (SAMPLE *) malloc( numBytes );
     if( data.recordedSamples == NULL )
