@@ -17,7 +17,7 @@
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
 /** Set to 1 if you want to capture the recording to a file. */
-#define WRITE_TO_FILE   (1)
+#define WRITE_TO_FILE   (0)
 
 /* Select sample format. */
 #define PA_SAMPLE_TYPE  paFloat32
@@ -186,25 +186,20 @@ int main(void)
 
     err = Pa_CloseStream( stream );
     if( err != paNoError ) goto done;
+    cout << "Finished" << endl;
 
-    /* Measure maximum peak amplitude. */
-    max = 0;
-    average = 0.0;
-    for( i=0; i<numSamples; i++ )
+    if(DEBUG_MODE > 0)
     {
-        val = data.recordedSamples[i];
-        if( val < 0 ) val = -val; /* ABS */
-        if( val > max )
-        {
-            max = val;
-        }
-        average += val;
+      vector<bool>::iterator it;
+      int counter = 0;
+      cout << "received data:" << endl;
+      for(it = data.bits.begin(); it != data.bits.end(); it++)
+      {
+        counter++;
+        cout << *it;
+        if(counter % 48 == 0){cout << endl;}
+      }
     }
-
-    average = average / (double)numSamples;
-
-    printf("sample max amplitude = "PRINTF_S_FORMAT"\n", max );
-    printf("sample average = %lf\n", average );
 
     /* Write recorded data to a file. */
 #if WRITE_TO_FILE
@@ -226,9 +221,12 @@ int main(void)
         ofstream bitFile;
         bitFile.open ("data.txt");
         vector<bool>::iterator it;
+        int counter = 0;
         for(it = data.bits.begin(); it != data.bits.end(); it++)
         {
+          counter++;
           bitFile << *it;
+          if(counter % 48 == 0){bitFile << endl;}
         }
         bitFile.close();
         printf("Wrote data to 'data.txt'\n");

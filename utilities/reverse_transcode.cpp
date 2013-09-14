@@ -50,15 +50,6 @@ void ReverseTranscode::perform(vector<bool> &dataBits)
       if(frequency == EDGE_LOW) { skip = true; }
     }
   }
-  if(DEBUG_MODE > 1) { cout << endl; }
-  if(DEBUG_MODE > 0)
-  {
-    for(int i = 0; i< dataBits.size(); i++)
-    {
-      cout << dataBits.at(i);
-    }
-    cout << endl;
-  }
-  if(DEBUG_MODE > 1) { cout << endl; }
+  if(DEBUG_MODE > 1) { cout << endl << endl; }
 }
 

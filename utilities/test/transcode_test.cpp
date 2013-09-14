@@ -7,13 +7,12 @@ SUITE (transcode)
 {
   TEST(perform)
   {
-    // random byte input
-    // 0x00: 00000000
-    // 0xFF: 11111111
-    // 0x5D: 01011101
-    unsigned char byteInput[3] = { 0x00, 0xFF, 0x5D };
+    bool rawBitsArr[24] = { F,F,F,F,F,F,F,F,
+                            T,T,T,T,T,T,T,T,
+                            F,T,F,T,T,T,F,T };
+    vector<bool> rawBits (rawBitsArr, rawBitsArr + sizeof(rawBitsArr) / sizeof(bool) );
     vector<bool> transcodedBits;
-    Transcode::Perform(byteInput, transcodedBits, 3);
+    Transcode::Perform(rawBits, transcodedBits);
     bool correctBitsArr[45] =   {T,T,T,T,F,                     // preamble
                                  F,F,T,F,T,F,T,F,T,F,T,F,T,F,T, // 0x00
                                  T,T,F,T,F,T,F,T,F,T,F,T,F,T,F, // 0xFF

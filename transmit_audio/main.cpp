@@ -3,6 +3,7 @@
 #include "codec2.h"
 #include "portaudio.h"
 #include "../utilities/constants.cpp"
+#include "../utilities/convert.cpp"
 #include "../utilities/transcode.cpp"
 #include "../utilities/transmit.cpp"
 #include "../utilities/downsample.cpp"
@@ -56,6 +57,7 @@ typedef struct
 {
   CODEC2        *codec2;
   Transmitter   *transmitter;
+  vector< vector<bool> >  recordedBits;
 }
 callbackData;
 
@@ -81,6 +83,7 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer, u
   (void) userData;
   SAMPLE downsampled[320];
   unsigned char compressed[6];
+  vector<bool> dataBits;
   vector<bool> transcodedBits;
 
   if( inputBuffer == NULL )
@@ -95,8 +98,14 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer, u
     // compress 320 samples to 6 bytes (48 bits)
     codec2_encode(data->codec2, compressed, downsampled);
 
+    // create dataBits from compressed unsigned chars
+    Convert::UnsignedCharToBits(compressed, dataBits, 6);
+
+    // record bits for testing
+    data->recordedBits.push_back(dataBits);
+
     // transcode via IncDec algorithm.
-    Transcode::Perform(compressed, transcodedBits, 6);
+    Transcode::Perform(dataBits, transcodedBits);
 
     // prep the transmitter
     data->transmitter->setBits(transcodedBits);
@@ -167,6 +176,29 @@ int main(void)
   printf("Finished.\n");
   Pa_Terminate();
   codec2_destroy(data.codec2);
+  if(DEBUG_MODE > 0)
+  {
+    cout << "transmitted data:" << endl;
+    // vector< vector<bool> >::iterator it;
+    // for(it = data.recordedBits.begin(); it != data.recordedBits.end(); it++)
+    // {
+      // vector<bool>::iterator inner_it;
+      // for(inner_it = *it.begin(); inner_it != *it.end(); inner_it++)
+      // {
+        // cout << *inner_it;
+      // }
+      // cout << endl;
+    // }
+
+    for(int i=0; i < data.recordedBits.size(); i++)
+    {
+      for(int j=0; j < data.recordedBits.at(i).size(); j++)
+      {
+        cout << data.recordedBits.at(i).at(j);
+      }
+      cout << endl;
+    }
+  }
   return 0;
 
 error:
