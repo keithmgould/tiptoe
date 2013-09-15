@@ -6,6 +6,7 @@
 #include "downsample_test.cpp"
 #include "transcode_test.cpp"
 // #include "transmit_test.cpp"
+#include "upsample_test.cpp"
 #include "extract_test.cpp"
 #include "reverse_transcode_test.cpp"
 

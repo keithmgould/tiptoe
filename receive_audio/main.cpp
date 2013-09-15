@@ -11,6 +11,7 @@
 #include "../utilities/demodulate.cpp"
 #include "../utilities/extract.cpp"
 #include "../utilities/reverse_transcode.cpp"
+#include "../utilities/upsample.cpp"
 
 
 /*----------------------------------------------------------------
@@ -39,13 +40,12 @@
  * Note however that when we feed the audo to Codec2, we first
  * downstample to 8kHz, which yields 320 frames per buffer
  */
-#define SAMPLE_RATE  (16000)
-#define FRAMES_PER_BUFFER (640)
+#define SAMPLE_RATE  (32000)
+#define FRAMES_PER_BUFFER (1280)
 
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
 
-typedef float SAMPLE;
 #define SAMPLE_SILENCE  (0.0f)
 
 using namespace std;
@@ -55,15 +55,13 @@ typedef struct
     // used to store codec2 instantiation
     CODEC2 *codec2;
 
-    // used to ensure we don't miss a crossing defined by last frame of
-    // previous buffer and first frame of current buffer
-    SAMPLE      lastSampleFromPrevBuffer;
-
-    // used to keep track of the delta between last crossing of previous buffer
-    // and first crossing of current buffer
-    float       deltaAfterLastCrossing;
-
-    // used for extracting data from demodulated bits
+    int         frameIndex;                       //Index into sample array
+    int         maxFrameIndex;
+    float      *recordedSamples;                 // holds actual floating point audio samples.  not needed
+    float       timeAfterLastBuffersLastCrossing; // used to keep track of the delta between buffers
+    float       lastBuffersLastDelta;
+    float       lastBuffersLastSample;
+    vector < vector<bool> > bits;                 // hold the data for testing
     vector<bool> remainingBits;
 }
 paTestData;
@@ -71,29 +69,28 @@ paTestData;
 void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits)
 {
   float * floatInputBuffer = (float *) inputBuffer;
-  vector<float>deltas;
-  // add the last sample, in case it was below zero and the first sample of the
-  // current buffer is above zero.  Otherwise we miss a crossing point.
-  if (data->lastSampleFromPrevBuffer != -1000)
+  vector<float>inputSamples;
+  if(data->lastBuffersLastSample != -1000)
   {
-    deltas.push_back(data->lastSampleFromPrevBuffer);
+    inputSamples.push_back(data->lastBuffersLastSample);
   }
-  DeltaFinder::Perform(floatInputBuffer, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->deltaAfterLastCrossing);
-  data->lastSampleFromPrevBuffer = deltas.back();
-
-  // take the different time deltas between sinusoids and turn them into 1s and 0s
-  // based on the IncDec algorithm.
+  inputSamples.insert(inputSamples.end(), floatInputBuffer, floatInputBuffer + FRAMES_PER_BUFFER);
+  vector<float>deltas;
+  if (data->lastBuffersLastDelta != -1000)
+  {
+    deltas.push_back(data->lastBuffersLastDelta);
+  }
+  DeltaFinder::Perform(inputSamples, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->timeAfterLastBuffersLastCrossing);
+  data->lastBuffersLastDelta = deltas.back();
+  data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
   vector<bool> demodulatedBits;
   Demodulate::Perform(deltas, demodulatedBits);
-
-  // Stitch the raw data together across buffers
   Extract extract(demodulatedBits, data->remainingBits);
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
-
-  // Reverse transcode:
   ReverseTranscode reverse_transcode(extractedBits, 48);
-  reverse_transcode.perform(bits);
+  vector<bool> dataBits;
+  reverse_transcode.perform(dataBits);
 }
 
 static int remoteToLocalCallback( const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData )
@@ -101,6 +98,7 @@ static int remoteToLocalCallback( const void *inputBuffer, void *outputBuffer, u
     paTestData *data = (paTestData*)userData;
     const float *rptr = (const float*)inputBuffer;
     short *out = (short*)outputBuffer;
+    short compressedOutput[320];
 
     (void) timeInfo;
     (void) statusFlags;
@@ -108,10 +106,11 @@ static int remoteToLocalCallback( const void *inputBuffer, void *outputBuffer, u
     {
 
     }else{
-      vector<bool> bits;
-      demodulator(inputBuffer, data, bits);
-      // unsigned char *charlie = (unsigned char *) &bits;
-      // codec2_decode(data->codec2, out, charlie);
+      vector<bool> outputBits;
+      demodulator(inputBuffer, data, outputBits);
+      unsigned char *outputBytes = (unsigned char *) &outputBits;
+      codec2_decode(data->codec2, compressedOutput, outputBytes);
+      Upsample::Perform(compressedOutput, out, 320);
     }
     return paContinue;
 }
@@ -131,14 +130,14 @@ int main(void)
     float               max, val;
     double              average;
 
-    data.lastSampleFromPrevBuffer = -1000;
-    data.deltaAfterLastCrossing = -1000;
-
     err = Pa_Initialize();
     if( err != paNoError ) goto done;
 
     /* create a pointer to the codec states */
     data.codec2 = codec2_create(CODEC2_MODE);
+    data.timeAfterLastBuffersLastCrossing = -1000;
+    data.lastBuffersLastDelta = -1000;
+    data.lastBuffersLastSample = -1000;
 
     inputParameters.device = 3; //Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {

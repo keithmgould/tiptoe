@@ -13,6 +13,7 @@
 
 #define SAMPLE_RATE  (32000)
 #define FRAMES_PER_BUFFER (1280)
+
 #define NUM_SECONDS     (1)
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
@@ -31,7 +32,7 @@ typedef struct
 {
     int         frameIndex;                       //Index into sample array
     int         maxFrameIndex;
-    SAMPLE      *recordedSamples;                 // holds actual floating point audio samples.  not needed
+    float      *recordedSamples;                 // holds actual floating point audio samples.  not needed
     float       timeAfterLastBuffersLastCrossing; // used to keep track of the delta between buffers
     float       lastBuffersLastDelta;
     float       lastBuffersLastSample;
@@ -66,6 +67,8 @@ void demodulator(const void * inputBuffer, paTestData * data)
   ReverseTranscode reverse_transcode(extractedBits, 48);
   vector<bool> dataBits;
   reverse_transcode.perform(dataBits);
+
+  // used for testing...
   if(dataBits.size() > 0) { data->bits.push_back(dataBits); }
 }
 
