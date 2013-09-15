@@ -71,7 +71,7 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
   unsigned char compressed[6];
   short downsampled[320];
   short upsampled[1280];
-  short postCompressed[320];
+  short uncompressed[320];
   if( inputBuffer == NULL )
   {
     for(int i=0; i<framesPerBuffer; i++ )
@@ -84,8 +84,14 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer,
     // downsample 1280 samples to 320 samples by taking every 4th sample
     Downsample::Perform(in, downsampled, 1280, 4);
 
+    // compress 320 samples to 6 bytes (48 bits)
+    codec2_encode(data->codec2, compressed, downsampled);
+
+    // uncompress 48 bits to 320 samples
+    codec2_decode(data->codec2, uncompressed, compressed);
+
     // upsample 320 samples to 1280 samples by interpolating
-    Upsample::Perform(downsampled,out, 320);
+    Upsample::Perform(uncompressed,out, 320);
   }
 
   return paContinue;
