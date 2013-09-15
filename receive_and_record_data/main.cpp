@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "portaudio.h"
+#include "codec2.h"
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -10,7 +11,9 @@
 #include "../utilities/demodulate.cpp"
 #include "../utilities/extract.cpp"
 #include "../utilities/reverse_transcode.cpp"
+#include "../utilities/upsample.cpp"
 
+#define CODEC2_MODE  (CODEC2_MODE_1200)
 #define SAMPLE_RATE  (32000)
 #define FRAMES_PER_BUFFER (1280)
 
@@ -18,7 +21,7 @@
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
 /** Set to 1 if you want to capture the recording to a file. */
-#define WRITE_TO_FILE   (0)
+#define WRITE_TO_FILE   (1)
 
 /* Select sample format. */
 #define PA_SAMPLE_TYPE  paFloat32
@@ -30,9 +33,10 @@ using namespace std;
 
 typedef struct
 {
+    CODEC2      *codec2;
     int         frameIndex;                       //Index into sample array
     int         maxFrameIndex;
-    float      *recordedSamples;                 // holds actual floating point audio samples.  not needed
+    float       *recordedSamples;                 // holds actual floating point audio samples.  not needed
     float       timeAfterLastBuffersLastCrossing; // used to keep track of the delta between buffers
     float       lastBuffersLastDelta;
     float       lastBuffersLastSample;
@@ -42,7 +46,7 @@ typedef struct
 }
 paTestData;
 
-void demodulator(const void * inputBuffer, paTestData * data)
+void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits)
 {
   float * floatInputBuffer = (float *) inputBuffer;
   vector<float>inputSamples;
@@ -65,11 +69,10 @@ void demodulator(const void * inputBuffer, paTestData * data)
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
   ReverseTranscode reverse_transcode(extractedBits, 48);
-  vector<bool> dataBits;
-  reverse_transcode.perform(dataBits);
+  reverse_transcode.perform(bits);
 
   // used for testing...
-  if(dataBits.size() > 0) { data->bits.push_back(dataBits); }
+  if(bits.size() > 0) { data->bits.push_back(bits); }
 }
 
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
@@ -110,10 +113,17 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
     }
     else
     {
-        demodulator(inputBuffer, data);
+        short compressedOutput[320];
+        short uncompressedOutput[1280];
+        vector<bool> outputBits;
+        demodulator(inputBuffer, data, outputBits);
+        unsigned char *outputBytes = (unsigned char *) &outputBits;
+        codec2_decode(data->codec2, compressedOutput, outputBytes);
+        Upsample::Perform(compressedOutput, uncompressedOutput, 320);
         for( i=0; i<framesToCalc; i++ )
         {
-            *wptr++ = *rptr++;
+            // *wptr++ = *rptr++;
+            *wptr++ = uncompressedOutput[i];
         }
     }
     data->frameIndex += framesToCalc;
@@ -135,6 +145,7 @@ int main(void)
     SAMPLE              max, val;
     double              average;
 
+    data.codec2 = codec2_create(CODEC2_MODE);
     data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;
     data.timeAfterLastBuffersLastCrossing = -1000;
@@ -216,19 +227,6 @@ int main(void)
             fclose( fid );
             printf("Wrote data to 'recorded.raw'\n");
         }
-
-        ofstream bitFile;
-        bitFile.open ("data.txt");
-        vector<bool>::iterator it;
-        int counter = 0;
-        for(it = data.bits.begin(); it != data.bits.end(); it++)
-        {
-          counter++;
-          bitFile << *it;
-          if(counter % 48 == 0){bitFile << endl;}
-        }
-        bitFile.close();
-        printf("Wrote data to 'data.txt'\n");
     }
 #endif
 

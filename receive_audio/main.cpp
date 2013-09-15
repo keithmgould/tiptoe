@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include "../utilities/constants.cpp"
+#include "../utilities/convert.cpp"
 #include "../utilities/delta_finder.cpp"
 #include "../utilities/demodulate.cpp"
 #include "../utilities/extract.cpp"
@@ -66,7 +67,7 @@ typedef struct
 }
 paTestData;
 
-void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits)
+void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& outputBits)
 {
   float * floatInputBuffer = (float *) inputBuffer;
   vector<float>inputSamples;
@@ -89,8 +90,7 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
   ReverseTranscode reverse_transcode(extractedBits, 48);
-  vector<bool> dataBits;
-  reverse_transcode.perform(dataBits);
+  reverse_transcode.perform(outputBits);
 }
 
 static int remoteToLocalCallback( const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData )
@@ -104,13 +104,24 @@ static int remoteToLocalCallback( const void *inputBuffer, void *outputBuffer, u
     (void) statusFlags;
     if( inputBuffer == NULL )
     {
-
+      cout << "emptyness..." << endl;
     }else{
       vector<bool> outputBits;
       demodulator(inputBuffer, data, outputBits);
-      unsigned char *outputBytes = (unsigned char *) &outputBits;
-      codec2_decode(data->codec2, compressedOutput, outputBytes);
-      Upsample::Perform(compressedOutput, out, 320);
+      if(outputBits.size() == 48)
+      {
+        // for(int i=0;i<48;i++)
+        // {
+          // cout << outputBits.at(i);
+        // }
+        // cout << endl;
+        unsigned char outputBytes[6];
+        Convert::BitsToUnsignedChar(outputBits, outputBytes, 6);
+        codec2_decode(data->codec2, compressedOutput, outputBytes);
+        Upsample::Perform(compressedOutput, out, 320);
+      }else{
+        cout << "bad packet" << endl;
+      }
     }
     return paContinue;
 }
