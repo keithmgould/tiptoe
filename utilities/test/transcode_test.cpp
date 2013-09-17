@@ -14,9 +14,9 @@ SUITE (transcode)
     vector<bool> transcodedBits;
     Transcode::Perform(rawBits, transcodedBits);
     bool correctBitsArr[45] =   {T,T,T,T,F,                     // preamble
-                                 F,F,T,F,T,F,T,F,T,F,T,F,T,F,T, // 0x00
-                                 T,T,F,T,F,T,F,T,F,T,F,T,F,T,F, // 0xFF
-                                 F,T,F,T,T,F,T,F,F,T};          // 0x5D
+                                 F,F,T,F,T,F,T,F,T,F,T,F,T,F,T, // data: 0x00
+                                 T,T,F,T,F,T,F,T,F,T,F,T,F,T,F, // data: 0xFF
+                                 F,T,F,T,T,F,T,F,F,T};          // data: 0x5D
 
 
     vector<bool> correctBits (correctBitsArr, correctBitsArr + sizeof(correctBitsArr) / sizeof(bool) );

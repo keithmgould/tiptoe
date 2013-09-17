@@ -5,7 +5,7 @@
  * A Frame sent over the wire has three parts:
  *   1) The preamble: 11110
  *   2) The Data
- *   3) 1s and 0s alternating until the frame is complete
+ *   3) 1s and 0s alternating until the frame is complete (garbage)
  *
  * Extract's job is to extract the data
  *

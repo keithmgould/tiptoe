@@ -18,7 +18,13 @@ class Transcode {
     transcodedBits.push_back(T);
     transcodedBits.push_back(F);
 
+    // The preamble leaves us at the Middle High frequency.
+    // The frequency variable is used to keep track of which frequency
+    // we are at in case we reach an "edge" frequency and need to
+    // "recover"
     int frequency = MIDDLE_HIGH;
+
+    //
     for(int i = 0; i < rawBits.size(); i++)
     {
       // Here we have a direct mapping between input and output
@@ -34,7 +40,8 @@ class Transcode {
 
       // If we ended up on an "edge" frequency,
       // recover by going in the other direction.
-      // This bit will be thrown out on the other side.
+      // This recovery bit will be thrown out on
+      // the other side.
       if(frequency == EDGE_LOW)
       {
         transcodedBits.push_back(T);

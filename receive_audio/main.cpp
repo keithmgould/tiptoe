@@ -71,26 +71,32 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& outp
 {
   float * floatInputBuffer = (float *) inputBuffer;
   vector<float>inputSamples;
-  if(data->lastBuffersLastSample != -1000)
-  {
-    inputSamples.push_back(data->lastBuffersLastSample);
-  }
+  if(data->lastBuffersLastSample != -1000) { inputSamples.push_back(data->lastBuffersLastSample); }
   inputSamples.insert(inputSamples.end(), floatInputBuffer, floatInputBuffer + FRAMES_PER_BUFFER);
   vector<float>deltas;
-  if (data->lastBuffersLastDelta != -1000)
-  {
-    deltas.push_back(data->lastBuffersLastDelta);
-  }
+  if (data->lastBuffersLastDelta != -1000) { deltas.push_back(data->lastBuffersLastDelta); }
+
+  // Determines the length of each sinusoid
   DeltaFinder::Perform(inputSamples, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->timeAfterLastBuffersLastCrossing);
   data->lastBuffersLastDelta = deltas.back();
   data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
   vector<bool> demodulatedBits;
+
+  // converts the sinusoid length changes to 1s and 0s
   Demodulate::Perform(deltas, demodulatedBits);
+
+  // Looks for the preambles and takes out the data between the preambles
   Extract extract(demodulatedBits, data->remainingBits);
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
-  ReverseTranscode reverse_transcode(extractedBits, 48);
-  reverse_transcode.perform(outputBits);
+
+  // Reverses the transcoding process, leaving real data
+  ReverseTranscode reverse_transcode(extractedBits, 53);
+  vector<bool> untranscodedBits;
+  reverse_transcode.perform(untranscodedBits);
+
+  // Ensures we have continuity by examining the bufferCounter
+  outputBits.assign(untranscodedBits.begin()+5, untranscodedBits.end());
 }
 
 static int remoteToLocalCallback( const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData )

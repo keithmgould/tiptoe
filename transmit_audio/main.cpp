@@ -55,9 +55,21 @@ typedef short SAMPLE;
  */
 typedef struct
 {
-  CODEC2        *codec2;
-  Transmitter   *transmitter;
+  // Points to the instance of codec2
+  CODEC2                  *codec2;
+
+  // Points to the instance of the transmitter, which holds
+  // waveforms that are expensive to compute, so we do this
+  // only once.
+  Transmitter             *transmitter;
+
+  // This is only for testing, and not used of DEBUG_LEVEL
+  // is == 0
   vector< vector<bool> >  recordedBits;
+
+  // Used to ensure both sides of the conversation are in
+  // sync.
+  int                     bufferCounter;
 }
 callbackData;
 
@@ -98,11 +110,19 @@ static int localToRemoteCallback( const void *inputBuffer, void *outputBuffer, u
     // compress 320 samples to 6 bytes (48 bits)
     codec2_encode(data->codec2, compressed, downsampled);
 
-    // create dataBits from compressed unsigned chars
+    // add the bufferCounter to the dataBits
+    bitset<5> bC ( (unsigned long) data->bufferCounter );
+    for(int i=0;i<5;i++) { dataBits.push_back(bC[i]);}
+
+    // increment the Buffer Counter used for synchronization
+    data->bufferCounter = (data->bufferCounter + 1) % 32;
+
+    // convert and push unsigned chars onto dataBits
     Convert::UnsignedCharToBits(compressed, dataBits, 6);
 
     // record bits for testing
     data->recordedBits.push_back(dataBits);
+
 
     // transcode via IncDec algorithm.
     Transcode::Perform(dataBits, transcodedBits);
@@ -128,11 +148,9 @@ int main(void)
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
-
-  /* create a pointer to the codec states */
   data.codec2 = codec2_create(CODEC2_MODE);
-
   data.transmitter = &transmitter;
+  data.bufferCounter = 0;
 
   inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
   if (inputParameters.device == paNoDevice) {
