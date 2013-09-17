@@ -179,17 +179,6 @@ int main(void)
   if(DEBUG_MODE > 0)
   {
     cout << "transmitted data:" << endl;
-    // vector< vector<bool> >::iterator it;
-    // for(it = data.recordedBits.begin(); it != data.recordedBits.end(); it++)
-    // {
-      // vector<bool>::iterator inner_it;
-      // for(inner_it = *it.begin(); inner_it != *it.end(); inner_it++)
-      // {
-        // cout << *inner_it;
-      // }
-      // cout << endl;
-    // }
-
     for(int i=0; i < data.recordedBits.size(); i++)
     {
       for(int j=0; j < data.recordedBits.at(i).size(); j++)
