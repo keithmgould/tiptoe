@@ -13,8 +13,8 @@
 #define EDGE_HIGH    (5)
 
 // semantics
-#define T (true)
-#define F (false)
+// #define T (true)
+// #define F (false)
 
 // as determined with a nail, twine and chalk.
 #ifndef M_PI

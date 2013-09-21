@@ -15,9 +15,9 @@ class Convert {
       {
         if(bits[j] == 1)
         {
-          dataBits.push_back(T);
+          dataBits.push_back(1);
         }else{
-          dataBits.push_back(F);
+          dataBits.push_back(0);
         }
       }
     }

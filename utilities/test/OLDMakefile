@@ -1,0 +1,9 @@
+CXX = g++
+INCLUDEEIGEN = /Users/Keith/source/eigen
+all: suite
+
+suite: Main.cpp ../../UnitTest++/libUnitTest++.a
+	$(CXX) Main.cpp ../../UnitTest++/libUnitTest++.a -o suite -I ../../UnitTest++/src/ -I$(INCLUDEEIGEN)
+
+clean:
+	rm -f ./suite
