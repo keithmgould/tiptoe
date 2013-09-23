@@ -41,7 +41,7 @@ void ReverseTranscode::perform(vector<bool> &dataBits)
       skip = false;
     }
 
-    if(*it == T)
+    if(*it == 1)
     {
       frequency++;
       if(frequency == EDGE_HIGH) { skip = true; }

@@ -90,11 +90,11 @@ pair <int, int> Extract::findPreambles()
   pair <int, int> indexes (-1, -1);
   for(int i = 4; i < this->totalRawBits.size(); i++)
   {
-    if(this->totalRawBits.at(i-4) == T &&
-       this->totalRawBits.at(i-3) == T &&
-       this->totalRawBits.at(i-2) == T &&
-       this->totalRawBits.at(i-1) == T &&
-       this->totalRawBits.at(i)   == F)
+    if(this->totalRawBits.at(i-4) == 1 &&
+       this->totalRawBits.at(i-3) == 1 &&
+       this->totalRawBits.at(i-2) == 1 &&
+       this->totalRawBits.at(i-1) == 1 &&
+       this->totalRawBits.at(i)   == 0)
     {
       if(indexes.first == -1)
       {

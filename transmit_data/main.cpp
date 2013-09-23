@@ -26,7 +26,7 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
   (void) inputBuffer;
 
   // 6 bytes (48 bits) will come from Codec2 so faux input: 6 random bytes
-  unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 };
+  unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 }; //110100111010100101011101001011011011110010010100
   // convert and push unsigned chars onto dataBits
   vector<bool> dataBits;
   vector<bool> transcodedBits;
@@ -48,7 +48,7 @@ int main(void)
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
-  outputParameters.device = 4; // Pa_GetDefaultOutputDevice(); /* default output device */
+  outputParameters.device = 5; // Pa_GetDefaultOutputDevice(); /* default output device */
   if (outputParameters.device == paNoDevice) {
     fprintf(stderr,"Error: No default output device.\n");
     goto error;

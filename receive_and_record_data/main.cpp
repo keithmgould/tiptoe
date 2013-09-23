@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "portaudio.h"
-#include "codec2.h"
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -13,7 +12,6 @@
 #include "../utilities/reverse_transcode.cpp"
 #include "../utilities/upsample.cpp"
 
-#define CODEC2_MODE  (CODEC2_MODE_1200)
 #define SAMPLE_RATE  (32000)
 #define FRAMES_PER_BUFFER (1280)
 
@@ -33,7 +31,6 @@ using namespace std;
 
 typedef struct
 {
-    CODEC2      *codec2;
     int         frameIndex;                       //Index into sample array
     int         maxFrameIndex;
     float       *recordedSamples;                 // holds actual floating point audio samples.  not needed
@@ -113,17 +110,12 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
     }
     else
     {
-        short compressedOutput[320];
-        short uncompressedOutput[1280];
         vector<bool> outputBits;
         demodulator(inputBuffer, data, outputBits);
         unsigned char *outputBytes = (unsigned char *) &outputBits;
-        codec2_decode(data->codec2, compressedOutput, outputBytes);
-        Upsample::Perform(compressedOutput, uncompressedOutput, 320);
         for( i=0; i<framesToCalc; i++ )
         {
-            // *wptr++ = *rptr++;
-            *wptr++ = uncompressedOutput[i];
+            *wptr++ = *rptr++;
         }
     }
     data->frameIndex += framesToCalc;
@@ -131,7 +123,6 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
 }
 
 /*******************************************************************/
-int main(void);
 int main(void)
 {
     PaStreamParameters  inputParameters,
@@ -145,7 +136,6 @@ int main(void)
     SAMPLE              max, val;
     double              average;
 
-    data.codec2 = codec2_create(CODEC2_MODE);
     data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;
     data.timeAfterLastBuffersLastCrossing = -1000;
@@ -163,7 +153,7 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto done;
 
-    inputParameters.device = 3; //Pa_GetDefaultInputDevice(); /* default input device */
+    inputParameters.device = 5; //Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {
         fprintf(stderr,"Error: No default input device.\n");
         goto done;
