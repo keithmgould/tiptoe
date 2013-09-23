@@ -1,6 +1,7 @@
 #include <math.h>
 #include <vector>
 #include <map>
+#include <sys/time.h>
 
 using namespace std;
 
@@ -23,6 +24,7 @@ class Transmitter {
   vector<bool> transcodedBits;
   vector<bool>::iterator bitIterator;
   int framesPerBuffer;
+  bool amplitudeMode;
   void buildWaveforms();
   int determineNextMode(int mode);
   public:
@@ -60,21 +62,24 @@ void Transmitter::emitSound( short *out )
   bool nextSinusoid = false;
   int phase = 0;
   int mode = PREAMBLE_LOW;
-  // cout << "mod:";
+
   for(int i=0; i < this->framesPerBuffer; i++ )
   {
     if(nextSinusoid)
     {
-      // cout << mode;
       mode = this->determineNextMode(mode);
       nextSinusoid = false;
       phase = 0;
     }
 
-    *out++ = this->tContainer.waveforms[mode].at(phase++);
+    if(this->amplitudeMode)
+    {
+      *out++ = this->tContainer.waveforms[mode].at(phase++);
+    }else{
+      *out++ = this->tContainer.waveforms[mode + 100].at(phase++);
+    }
     if(phase >= this->tContainer.waveformSizes[mode]) { nextSinusoid = true;}
   }
-  // cout << endl << endl;
 }
 
 /*
@@ -82,7 +87,10 @@ void Transmitter::emitSound( short *out )
    Builds the waveforms used to generate sound.
    This is done using the standard definition of sine, and then converted
    into a type short via multiplication of 32767.
+   We also find the amplitude at 70%.  This is because every half second we
+   switch from one amplitude to another to defeat Voice Activity Detection (VAD).
 */
+
 void Transmitter::buildWaveforms()
 {
   int i;
@@ -95,8 +103,13 @@ void Transmitter::buildWaveforms()
   {
     for( i=0; i< it->second; i++ )
     {
+      // Full amplitude waveforms
       sample = (SAMPLE) (sin( ((double)i/(double) it->second) * M_PI * 2.0) * 32767);
       this->tContainer.waveforms[it->first].push_back(sample);
+
+      // 70% amplitude waveforms.
+      sample = (SAMPLE) (sin( ((double)i/(double) it->second) * M_PI * 2.0) * 32767 * 0.7);
+      this->tContainer.waveforms[it->first + 100].push_back(sample);
     }
   }
 }
@@ -114,6 +127,8 @@ void Transmitter::buildWaveforms()
  */
 int Transmitter::determineNextMode(int mode)
 {
+  // get us back to pre-amplitude-adjustd mode
+
   // if we are finished sending data, use alternating
   // ones and zeros as filler.  Otherwise send the
   // data
@@ -125,7 +140,7 @@ int Transmitter::determineNextMode(int mode)
       mode = MIDDLE_HIGH;
     }
   }else{
-    if( *this->bitIterator == F)
+    if( *this->bitIterator == 0)
     {
       mode -= 1;
     }else{
@@ -134,11 +149,11 @@ int Transmitter::determineNextMode(int mode)
     this->bitIterator++;
   }
 
-  // if(!this->tContainer.waveformSizes.find(mode))
-  // {
-    // cout << "We got to a bad place sir.  Mode = " << mode << endl;
-    // return;
-  // }
-
+  // if we are in the second half of a second, add 100 to the mode
+  // to adjust the amplitude.
+  timeval time;
+  gettimeofday(&time, NULL);
+  long millis = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+  amplitudeMode = (millis  % 1000) > 500;
   return mode;
 };

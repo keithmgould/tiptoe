@@ -12,11 +12,11 @@ class Transcode {
   {
     // First place the preamble.
     // Takes us from PREAMBLE_LOW to MIDDLE_HIGH
-    transcodedBits.push_back(T);
-    transcodedBits.push_back(T);
-    transcodedBits.push_back(T);
-    transcodedBits.push_back(T);
-    transcodedBits.push_back(F);
+    transcodedBits.push_back(1);
+    transcodedBits.push_back(1);
+    transcodedBits.push_back(1);
+    transcodedBits.push_back(1);
+    transcodedBits.push_back(0);
 
     // The preamble leaves us at the Middle High frequency.
     // The frequency variable is used to keep track of which frequency
@@ -31,10 +31,10 @@ class Transcode {
       if(DEBUG_MODE > 1) { cout << rawBits.at(i); }
       if(rawBits.at(i) == 1)
       {
-        transcodedBits.push_back(T);
+        transcodedBits.push_back(1);
         frequency++;
       }else{
-        transcodedBits.push_back(F);
+        transcodedBits.push_back(0);
         frequency--;
       }
 
@@ -44,12 +44,12 @@ class Transcode {
       // the other side.
       if(frequency == EDGE_LOW)
       {
-        transcodedBits.push_back(T);
+        transcodedBits.push_back(1);
         frequency++;
       }
       if(frequency == EDGE_HIGH)
       {
-        transcodedBits.push_back(F);
+        transcodedBits.push_back(0);
         frequency--;
       }
     }
