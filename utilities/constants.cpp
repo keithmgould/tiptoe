@@ -1,9 +1,12 @@
+#define SAMPLE_RATE   (32000) // 8000 * 4
+#define FRAMES_PER_BUFFER  (1280) // 320 * 4
+
 // the size of the various frequency sinusoids
-#define PREAMBLE_LOW_TABLE_SIZE (16)
-#define EDGE_LOW_TABLE_SIZE     (14)
-#define MIDDLE_LOW_TABLE_SIZE   (12)
-#define MIDDLE_HIGH_TABLE_SIZE  (10)
-#define EDGE_HIGH_TABLE_SIZE    (8)
+#define PREAMBLE_LOW_FREQUENCY (2400)
+#define EDGE_LOW_FREQUENCY     (2600)
+#define MIDDLE_LOW_FREQUENCY   (2800)
+#define MIDDLE_HIGH_FREQUENCY  (3000)
+#define EDGE_HIGH_FREQUENCY    (3200)
 
 // the various frequency modes
 #define PREAMBLE_LOW (1)
@@ -25,4 +28,4 @@
 // 0 : show nothing
 // 1 : show only data
 // 2 : show data and more
-#define DEBUG_MODE (1)
+#define DEBUG_MODE (0)
