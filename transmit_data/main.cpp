@@ -9,9 +9,6 @@
 #include "../utilities/transcode.cpp"
 #include "../utilities/transmit.cpp"
 
-#define SAMPLE_RATE   (32000) // 8000 * 4
-#define FRAMES_PER_BUFFER  (1280) // 320 * 4
-
 using namespace std;
 
 typedef short SAMPLE;
@@ -27,6 +24,7 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
 
   // 6 bytes (48 bits) will come from Codec2 so faux input: 6 random bytes
   unsigned char faux[6] = { 0xD3, 0xA9, 0x5D, 0x2D, 0xBC, 0x94 }; //110100111010100101011101001011011011110010010100
+  // unsigned char faux[6] = { 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, };   //101010101010101010101010101010101010101010101010
   // convert and push unsigned chars onto dataBits
   vector<bool> dataBits;
   vector<bool> transcodedBits;
@@ -48,7 +46,7 @@ int main(void)
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
-  outputParameters.device = 5; // Pa_GetDefaultOutputDevice(); /* default output device */
+  outputParameters.device = 3; // Pa_GetDefaultOutputDevice(); /* default output device */
   if (outputParameters.device == paNoDevice) {
     fprintf(stderr,"Error: No default output device.\n");
     goto error;

@@ -5,10 +5,6 @@
 
 using namespace std;
 
-// The number of samples per frequency mode
-// TODO: its not great that these numbers are
-//       dissasociated with the sample frequency.
-
 // local input audio samples are of type short
 typedef short SAMPLE;
 
@@ -16,7 +12,7 @@ typedef short SAMPLE;
 typedef struct
 {
   map<int, vector<SAMPLE> > waveforms;
-  map<int, int> waveformSizes;
+  map<int, double> waveformSizes;
 }
 transmitContainer;
 
@@ -26,7 +22,7 @@ class Transmitter {
   int framesPerBuffer;
   bool amplitudeMode;
   void buildWaveforms();
-  int determineNextMode(int mode);
+  int determineNextMode(int mode, int onFrame);
   public:
   void emitSound(short *out );
   void setBits(vector<bool> &transcodedBits);
@@ -38,11 +34,11 @@ class Transmitter {
 Transmitter::Transmitter (int framesPerBuffer)
 {
   this->framesPerBuffer = framesPerBuffer;
-  this->tContainer.waveformSizes[PREAMBLE_LOW] = PREAMBLE_LOW_TABLE_SIZE;
-  this->tContainer.waveformSizes[EDGE_LOW] = EDGE_LOW_TABLE_SIZE;
-  this->tContainer.waveformSizes[MIDDLE_LOW] = MIDDLE_LOW_TABLE_SIZE;
-  this->tContainer.waveformSizes[MIDDLE_HIGH] = MIDDLE_HIGH_TABLE_SIZE;
-  this->tContainer.waveformSizes[EDGE_HIGH] = EDGE_HIGH_TABLE_SIZE;
+  this->tContainer.waveformSizes[PREAMBLE_LOW] = (double) SAMPLE_RATE / (double) PREAMBLE_LOW_FREQUENCY;
+  this->tContainer.waveformSizes[EDGE_LOW] = (double) SAMPLE_RATE / (double) EDGE_LOW_FREQUENCY;
+  this->tContainer.waveformSizes[MIDDLE_LOW] = (double) SAMPLE_RATE / (double) MIDDLE_LOW_FREQUENCY;
+  this->tContainer.waveformSizes[MIDDLE_HIGH] = (double) SAMPLE_RATE / (double) MIDDLE_HIGH_FREQUENCY;
+  this->tContainer.waveformSizes[EDGE_HIGH] = (double) SAMPLE_RATE / (double) EDGE_HIGH_FREQUENCY;
   buildWaveforms();
 }
 
@@ -67,16 +63,16 @@ void Transmitter::emitSound( short *out )
   {
     if(nextSinusoid)
     {
-      mode = this->determineNextMode(mode);
+      mode = this->determineNextMode(mode, i);
       nextSinusoid = false;
       phase = 0;
     }
 
     if(this->amplitudeMode)
     {
-      *out++ = this->tContainer.waveforms[mode].at(phase++);
-    }else{
       *out++ = this->tContainer.waveforms[mode + 100].at(phase++);
+    }else{
+      *out++ = this->tContainer.waveforms[mode].at(phase++);
     }
     if(phase >= this->tContainer.waveformSizes[mode]) { nextSinusoid = true;}
   }
@@ -95,22 +91,25 @@ void Transmitter::buildWaveforms()
 {
   int i;
 
-  map<int,int>::iterator it = this->tContainer.waveformSizes.begin();
+  map<int,double>::iterator it = this->tContainer.waveformSizes.begin();
   SAMPLE sample;
 
   // for each waveform size
   for(;it != this->tContainer.waveformSizes.end(); it++)
   {
+    cout << "wav " << it->first << ": ";
     for( i=0; i< it->second; i++ )
     {
       // Full amplitude waveforms
-      sample = (SAMPLE) (sin( ((double)i/(double) it->second) * M_PI * 2.0) * 32767);
+      sample = (SAMPLE) (sin( ((double)i/it->second) * M_PI * 2.0) * 32767);
+      cout << sample << ", ";
       this->tContainer.waveforms[it->first].push_back(sample);
 
       // 70% amplitude waveforms.
-      sample = (SAMPLE) (sin( ((double)i/(double) it->second) * M_PI * 2.0) * 32767 * 0.7);
+      sample = sample * 0.7;
       this->tContainer.waveforms[it->first + 100].push_back(sample);
     }
+    cout << endl;
   }
 }
 
@@ -125,7 +124,7 @@ void Transmitter::buildWaveforms()
 
   TODO: Refactor
  */
-int Transmitter::determineNextMode(int mode)
+int Transmitter::determineNextMode(int mode, int onFrame)
 {
   // get us back to pre-amplitude-adjustd mode
 
@@ -134,10 +133,36 @@ int Transmitter::determineNextMode(int mode)
   // data
   if( this->bitIterator == this->transcodedBits.end() )
   {
-    if(mode == MIDDLE_HIGH){
-      mode = MIDDLE_LOW;
+    int framesLeft = this->framesPerBuffer - onFrame;
+    if( framesLeft < 20 )
+    {
+      // cout << framesLeft << ", ";
+      // ok, we only have 8 frames left.  All existing waveforms are larger than 8 frames.
+      // So we have to engineer a new shiny waveform with the remaining frames.
+      SAMPLE sample;
+      this->tContainer.waveforms[50000].clear();
+      this->tContainer.waveformSizes[50000] = framesLeft;
+      for( int i=0; i< framesLeft; i++ )
+      {
+        sample = (SAMPLE) (sin( ((double)i/(double) framesLeft) * M_PI * 2.0) * 32767);
+        this->tContainer.waveforms[50000].push_back(sample);
+        // 70% amplitude waveforms.
+        sample = sample * 0.7;
+        this->tContainer.waveforms[50100].push_back(sample);
+      }
+      mode = 50000;
     }else{
-      mode = MIDDLE_HIGH;
+      switch(mode)
+      {
+        case MIDDLE_HIGH:
+          mode = MIDDLE_LOW; break;
+        case MIDDLE_LOW:
+          mode = MIDDLE_HIGH; break;
+        case EDGE_LOW:
+          mode = MIDDLE_LOW; break;
+        case EDGE_HIGH:
+          mode = MIDDLE_HIGH; break;
+      }
     }
   }else{
     if( *this->bitIterator == 0)
