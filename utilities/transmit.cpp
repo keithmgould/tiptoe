@@ -5,13 +5,15 @@
 
 using namespace std;
 
-// local input audio samples are of type short
-typedef short SAMPLE;
+// used for modulating the amplitude to prevent
+// voice detection from thinking the audio
+// is just background noise.
+const float SMALLER_AMPLITUDE = 0.60;
 
 // holds the tContainer
 typedef struct
 {
-  map<int, vector<SAMPLE> > waveforms;
+  map<int, vector<short> > waveforms;
   map<int, double> waveformSizes;
 }
 transmitContainer;
@@ -58,8 +60,10 @@ void Transmitter::emitSound( short *out )
   bool nextSinusoid = false;
   int phase = 0;
   int mode = PREAMBLE_LOW;
-
-  for(int i=0; i < this->framesPerBuffer; i++ )
+  float amp;
+  float fpb;
+  fpb = this->framesPerBuffer;
+  for(int i=0; i < fpb; i++ )
   {
     if(nextSinusoid)
     {
@@ -67,12 +71,19 @@ void Transmitter::emitSound( short *out )
       nextSinusoid = false;
       phase = 0;
     }
-
+    amp = 0.5;
+    if( i <= (fpb / 2))
+    {
+      amp += i/fpb;
+    }else{
+      amp += (fpb - i) / fpb;
+    }
+    // cout << amp << ", ";
     if(this->amplitudeMode)
     {
-      *out++ = this->tContainer.waveforms[mode + 100].at(phase++);
+      *out++ = amp * this->tContainer.waveforms[mode + 100].at(phase++);
     }else{
-      *out++ = this->tContainer.waveforms[mode].at(phase++);
+      *out++ = amp * this->tContainer.waveforms[mode].at(phase++);
     }
     if(phase >= this->tContainer.waveformSizes[mode]) { nextSinusoid = true;}
   }
@@ -92,7 +103,7 @@ void Transmitter::buildWaveforms()
   int i;
 
   map<int,double>::iterator it = this->tContainer.waveformSizes.begin();
-  SAMPLE sample;
+  short sample;
 
   // for each waveform size
   for(;it != this->tContainer.waveformSizes.end(); it++)
@@ -101,12 +112,12 @@ void Transmitter::buildWaveforms()
     for( i=0; i< it->second; i++ )
     {
       // Full amplitude waveforms
-      sample = (SAMPLE) (sin( ((double)i/it->second) * M_PI * 2.0) * 32767);
+      sample = (short) (sin( ((double)i/it->second) * M_PI * 2.0) * 32767);
       cout << sample << ", ";
       this->tContainer.waveforms[it->first].push_back(sample);
 
       // 70% amplitude waveforms.
-      sample = sample * 0.7;
+      sample = sample * SMALLER_AMPLITUDE;
       this->tContainer.waveforms[it->first + 100].push_back(sample);
     }
     cout << endl;
@@ -139,15 +150,15 @@ int Transmitter::determineNextMode(int mode, int onFrame)
       // cout << framesLeft << ", ";
       // ok, we only have 8 frames left.  All existing waveforms are larger than 8 frames.
       // So we have to engineer a new shiny waveform with the remaining frames.
-      SAMPLE sample;
+      short sample;
       this->tContainer.waveforms[50000].clear();
       this->tContainer.waveformSizes[50000] = framesLeft;
       for( int i=0; i< framesLeft; i++ )
       {
-        sample = (SAMPLE) (sin( ((double)i/(double) framesLeft) * M_PI * 2.0) * 32767);
+        sample = (short) (sin( ((double)i/(double) framesLeft) * M_PI * 2.0) * 32767);
         this->tContainer.waveforms[50000].push_back(sample);
         // 70% amplitude waveforms.
-        sample = sample * 0.7;
+        sample = sample * SMALLER_AMPLITUDE;
         this->tContainer.waveforms[50100].push_back(sample);
       }
       mode = 50000;
@@ -179,6 +190,8 @@ int Transmitter::determineNextMode(int mode, int onFrame)
   timeval time;
   gettimeofday(&time, NULL);
   long millis = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-  amplitudeMode = (millis  % 1000) > 500;
+  millis = millis % 1000;
+
+  amplitudeMode = (millis < 250) || (millis > 500 && millis < 750);
   return mode;
 };

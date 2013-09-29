@@ -2,11 +2,11 @@
 #define FRAMES_PER_BUFFER  (1280) // 320 * 4
 
 // the size of the various frequency sinusoids
-#define PREAMBLE_LOW_FREQUENCY (2400)
-#define EDGE_LOW_FREQUENCY     (2600)
-#define MIDDLE_LOW_FREQUENCY   (2800)
+#define PREAMBLE_LOW_FREQUENCY (2100)
+#define EDGE_LOW_FREQUENCY     (2400)
+#define MIDDLE_LOW_FREQUENCY   (2700)
 #define MIDDLE_HIGH_FREQUENCY  (3000)
-#define EDGE_HIGH_FREQUENCY    (3200)
+#define EDGE_HIGH_FREQUENCY    (3300)
 
 // the various frequency modes
 #define PREAMBLE_LOW (1)
