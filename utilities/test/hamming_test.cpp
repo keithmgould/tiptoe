@@ -10,7 +10,7 @@ TEST(hamming, data_bit_length)
   ASSERT_EQ(4, ham.data_bit_length);
 }
 
-TEST(hammimg, generator_matrix)
+TEST(hammimg, building_generator_matrix)
 {
   ArrayXXb correct_gm(4,7);
   correct_gm << 0,1,1,1,0,0,0,
@@ -18,13 +18,19 @@ TEST(hammimg, generator_matrix)
                 1,1,0,0,0,1,0,
                 1,1,1,0,0,0,1;
 
+  Hamming ham(parity_bits);
+  ASSERT_TRUE( (correct_gm == ham.generator_matrix).all() );
+}
+
+TEST(hamming, building_parity_check_matrix)
+{
+  ArrayXXb correct_pcm(3,7);
+  correct_pcm << 1,0,0,0,1,1,1,
+                 0,1,0,1,0,1,1,
+                 0,0,1,1,1,0,1;
 
   Hamming ham(parity_bits);
-
-  ArrayXXb all_ones(4,7);
-  all_ones = correct_gm == ham.generator_matrix;
-
-  ASSERT_EQ(true, all_ones.isOnes());
+  ASSERT_TRUE( (correct_pcm == ham.parity_check_matrix).all() );
 }
 
 TEST(hamming, encode)
@@ -39,4 +45,21 @@ TEST(hamming, encode)
   vector<bool> output;
   ham.encode(input, output);
   ASSERT_THAT(output, testing::ElementsAre(1,0,1,1,0,1,0));
+}
+
+TEST(hamming, decode_with_no_errors)
+{
+  Hamming ham(parity_bits);
+  ArrayXXb correct_decoded(1,4);
+  vector<bool> input;
+  input.push_back(1);
+  input.push_back(0);
+  input.push_back(1);
+  input.push_back(1);
+  input.push_back(0);
+  input.push_back(1);
+  input.push_back(0);
+  vector<bool> output;
+  ham.decode(input, output);
+  ASSERT_THAT(output, testing::ElementsAre(1,0,1,0));
 }
