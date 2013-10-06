@@ -46,12 +46,12 @@ int main(void)
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
-  outputParameters.device = 3; // Pa_GetDefaultOutputDevice(); /* default output device */
+  outputParameters.device = 2;// Pa_GetDefaultOutputDevice(); /* default output device */
   if (outputParameters.device == paNoDevice) {
     fprintf(stderr,"Error: No default output device.\n");
     goto error;
   }
-  outputParameters.channelCount = 1;       /* mono output */
+  outputParameters.channelCount = 2;       /* mono output */
   outputParameters.sampleFormat = paInt16;
   outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL;

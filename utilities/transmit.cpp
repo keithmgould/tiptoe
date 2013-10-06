@@ -78,13 +78,15 @@ void Transmitter::emitSound( short *out )
     }else{
       amp += (fpb - i) / fpb;
     }
-    // cout << amp << ", ";
     if(this->amplitudeMode)
     {
-      *out++ = amp * this->tContainer.waveforms[mode + 100].at(phase++);
+      amp = amp * this->tContainer.waveforms[mode + 100].at(phase++);
     }else{
-      *out++ = amp * this->tContainer.waveforms[mode].at(phase++);
+      amp = amp * this->tContainer.waveforms[mode].at(phase++);
     }
+    // output the same thing on both channels
+    *out++ = amp;
+    *out++ = amp;
     if(phase >= this->tContainer.waveformSizes[mode]) { nextSinusoid = true;}
   }
 }

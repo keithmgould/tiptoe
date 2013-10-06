@@ -12,9 +12,6 @@
 #include "../utilities/reverse_transcode.cpp"
 #include "../utilities/upsample.cpp"
 
-#define SAMPLE_RATE  (32000)
-#define FRAMES_PER_BUFFER (1280)
-
 #define NUM_SECONDS     (1)
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
@@ -153,7 +150,7 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto done;
 
-    inputParameters.device = 5; //Pa_GetDefaultInputDevice(); /* default input device */
+    inputParameters.device = 3; //Pa_GetDefaultInputDevice(); /* default input device */
     if (inputParameters.device == paNoDevice) {
         fprintf(stderr,"Error: No default input device.\n");
         goto done;

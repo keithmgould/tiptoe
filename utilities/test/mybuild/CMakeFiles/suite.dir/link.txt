@@ -1,1 +1,0 @@
-/usr/bin/c++    -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/suite.dir/main.cpp.o CMakeFiles/suite.dir/convert_test.cpp.o CMakeFiles/suite.dir/hamming_test.cpp.o  -o suite  -L/Users/keith/source/gmock-1.7.0/mybuild  -L/Users/keith/source/gmock-1.7.0/gtest/mybuild  -lgmock -lgtest 

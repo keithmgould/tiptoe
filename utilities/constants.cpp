@@ -1,5 +1,5 @@
-#define SAMPLE_RATE   (32000) // 8000 * 4
-#define FRAMES_PER_BUFFER  (1280) // 320 * 4
+#define SAMPLE_RATE   (48000) // 8000 * 6
+#define FRAMES_PER_BUFFER  (1920) // 320 * 6
 
 // the size of the various frequency sinusoids
 #define PREAMBLE_LOW_FREQUENCY (2100)
