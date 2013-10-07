@@ -1,4 +1,5 @@
 #include <math.h>
+#include <bitset>
 #include <Eigen/Dense>
 
 using namespace Eigen;
@@ -21,16 +22,18 @@ class Hamming
   public:
   ArrayXXb generator_matrix;
   ArrayXXb parity_check_matrix;
-  ArrayVertb input_vector;
-  ArrayHorzb output_vector;
-  int data_bit_length;
-  int parity_bit_length;
-  int codeword_length;
   Hamming(int parity_bits);
   void encode(vector<bool>& input, vector<bool>& output);
   void decode(vector<bool>& input, vector<bool>& output);
 
   private:
+  int data_bit_length;
+  int parity_bit_length;
+  int codeword_length;
+  ArrayVertb encode_input_vector;
+  ArrayHorzb encode_output_vector;
+  ArrayHorzb decode_input_vector;
+  ArrayVertb decode_output_vector;
   void build_generator_matrix();
   void build_parity_check_matrix();
 };
@@ -42,68 +45,56 @@ Hamming::Hamming(int parity_bit_length)
   codeword_length = parity_bit_length + data_bit_length;
   build_parity_check_matrix();
   build_generator_matrix();
-  input_vector.resize(data_bit_length,Eigen::NoChange);
-  output_vector.resize(Eigen::NoChange,data_bit_length + parity_bit_length);
+  encode_input_vector.resize(data_bit_length,Eigen::NoChange);
+  encode_output_vector.resize(Eigen::NoChange,codeword_length);
+  decode_input_vector.resize(Eigen::NoChange, codeword_length);
+  decode_output_vector.resize(data_bit_length,Eigen::NoChange);
 }
 
 void Hamming::encode(vector<bool>& input, vector<bool>& output)
 {
-  for(int i=0;i<input.size();i++){ input_vector(i) = input.at(i); }
-  output_vector = (generator_matrix.colwise() * input_vector).colwise().redux(logical_xor());
-  for(int i=0;i<codeword_length;i++){ output.push_back(output_vector(0,i)); }
+  for(int i=0;i<data_bit_length;i++){ encode_input_vector(i) = input.at(i); }
+  encode_output_vector = (generator_matrix.colwise() * encode_input_vector).colwise().redux(logical_xor());
+  for(int i=0;i<codeword_length;i++){ output.push_back(encode_output_vector(0,i)); }
 }
 
 void Hamming::decode(vector<bool>& input, vector<bool>& output)
 {
-  // first we check to see if there are errors via parity bits
-  // if errors
-  // else
+  for(int i=0;i<codeword_length;i++){ decode_input_vector(i) = input.at(i); }
+  decode_output_vector = (parity_check_matrix.rowwise() * decode_input_vector).rowwise().redux(logical_xor());
+  for(int i=0;i<parity_bit_length;i++){ output.push_back(decode_output_vector(i,0)); }
 }
 
 void Hamming::build_parity_check_matrix()
 {
-  parity_check_matrix.resize(parity_bit_length, data_bit_length + parity_bit_length);
-  MatrixXXb temp2;
-  temp2.setIdentity(parity_bit_length,parity_bit_length);
-  parity_check_matrix.block(0,0,parity_bit_length,parity_bit_length) = temp2;
-  // now add the columns in one by one
-  for(int i = 2; i < codeword_length;i++)
+  parity_check_matrix.resize(parity_bit_length, codeword_length);
+  std::bitset < 100 > bits;
+
+  int powers_found = 0;
+  for(int i = 0; i < codeword_length; i++)
   {
-     
+    bits = (unsigned long) (i + 1);
+    for(int j = 0; j < parity_bit_length; j++)
+    {
+      parity_check_matrix(j,i) = bits[j];
+    }
+
+    // if we found a power of 2, swap it to get the matrix in "standard" form.
+    // (1 bit being on means a power of two)
+    if(bits.count() == 1)
+    {
+      parity_check_matrix.col(powers_found).swap(parity_check_matrix.col(i));
+      powers_found++;
+    }
   }
 }
 
-
-// void Hamming::build_generator_matrix()
-// {
-  // generator_matrix.resize(data_bit_length, data_bit_length + parity_bit_length);
-
-  // // first generate the parity bit columns
-  // for(int p = 0; p<parity_bit_length; p++)
-  // {
-    // for(int i=0; i<data_bit_length; i++)
-    // {
-      // generator_matrix(i,p) = (p != i);
-    // }
-  // }
-  // // then the data bit columns
-  // int total_bit_length = parity_bit_length + data_bit_length;
-  // for(int d = parity_bit_length; d<total_bit_length; d++)
-  // {
-    // for(int i = 0; i<data_bit_length; i++)
-    // {
-      // generator_matrix(i,d) = (d - parity_bit_length == i);
-    // }
-  // }
-// }
-
-// void Hamming::build_parity_check_matrix()
-// {
-  // parity_check_matrix.resize(parity_bit_length, data_bit_length + parity_bit_length);
-  // MatrixXXb temp1 = generator_matrix.block(0, 0, data_bit_length,parity_bit_length).transpose();
-  // MatrixXXb temp2;
-  // temp2.setIdentity(parity_bit_length,parity_bit_length);
-  // parity_check_matrix.block(0,0,parity_bit_length,parity_bit_length) = temp2;
-  // parity_check_matrix.block(0,parity_bit_length,parity_bit_length,data_bit_length) = temp1;
-// }
-
+void Hamming::build_generator_matrix()
+{
+  generator_matrix.resize(data_bit_length, codeword_length);
+  MatrixXXb temp1 = parity_check_matrix.block(0, parity_bit_length, parity_bit_length,data_bit_length).transpose();
+  MatrixXXb temp2;
+  temp2.setIdentity(data_bit_length,data_bit_length);
+  generator_matrix.block(0,0,data_bit_length,parity_bit_length) = temp1;
+  generator_matrix.block(0,parity_bit_length, data_bit_length,data_bit_length) = temp2;
+}

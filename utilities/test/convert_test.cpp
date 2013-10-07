@@ -11,7 +11,7 @@ TEST(convert, unsigned_char_to_bits) {
   ASSERT_EQ(correctBits, dataBits);
 }
 
-TEST(convrt, bits_to_unsigned_char)
+TEST(convert, bits_to_unsigned_char)
 {
   bool inputBitsArr[24] = {0,1,0,0,1,0,1,1, 0,1,0,0,1,1,0,1,  0,1,0,0,0,1,1,1};
   vector<bool> inputBits (inputBitsArr, inputBitsArr + sizeof(inputBitsArr) / sizeof(bool) );
