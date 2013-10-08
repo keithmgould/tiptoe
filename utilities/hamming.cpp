@@ -60,9 +60,27 @@ void Hamming::encode(vector<bool>& input, vector<bool>& output)
 
 void Hamming::decode(vector<bool>& input, vector<bool>& output)
 {
+  // determine syndrome
   for(int i=0;i<codeword_length;i++){ decode_input_vector(i) = input.at(i); }
   decode_output_vector = (parity_check_matrix.rowwise() * decode_input_vector).rowwise().redux(logical_xor());
-  for(int i=0;i<parity_bit_length;i++){ output.push_back(decode_output_vector(i,0)); }
+
+  // if no syndrome (no errors)
+  if(decode_output_vector.sum() == 0)
+  {
+    output.assign(input.begin()+parity_bit_length, input.end());
+  }else{
+    int syndrome_at = 0;
+    for(int i=0;i<parity_bit_length;i++)
+    {
+      if (decode_output_vector(i,0) == 1)
+      {
+        syndrome_at += (int) pow( (double) 2, (double) i);
+      }
+    }
+    syndrome_at--;
+    input[syndrome_at] = (input[syndrome_at] + 1) % 2;
+    output.assign(input.begin()+parity_bit_length, input.end());
+  }
 }
 
 void Hamming::build_parity_check_matrix()
