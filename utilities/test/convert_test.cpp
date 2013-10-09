@@ -1,6 +1,6 @@
 #include "gmock/gmock.h"
-#include "../constants.cpp"
-#include "../convert.cpp"
+#include "../src/constants.cpp"
+#include "../src/convert.cpp"
 
 TEST(convert, unsigned_char_to_bits) {
   unsigned char inputChars[3] = { 0xD3, 0xA9, 0x5D };

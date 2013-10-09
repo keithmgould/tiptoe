@@ -4,10 +4,10 @@
 #include <fstream>
 #include <stdlib.h>
 #include "portaudio.h"
-#include "../utilities/constants.cpp"
-#include "../utilities/convert.cpp"
-#include "../utilities/transcode.cpp"
-#include "../utilities/transmit.cpp"
+#include "../utilities/include/constants.h"
+#include "../utilities/src/convert.cpp"
+#include "../utilities/src/transcode.cpp"
+#include "../utilities/src/transmit.cpp"
 
 using namespace std;
 

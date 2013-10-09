@@ -1,6 +1,6 @@
 #include "gmock/gmock.h"
-#include "../constants.cpp"
-#include "../hamming.cpp"
+#include "../src/constants.cpp"
+#include "../src/hamming.cpp"
 #include <vector>
 
 /* Hamming Code with 3 parity bits */
