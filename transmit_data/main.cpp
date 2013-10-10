@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include "portaudio.h"
 #include "../utilities/include/constants.h"
-#include "../utilities/src/convert.cpp"
-#include "../utilities/src/transcode.cpp"
-#include "../utilities/src/transmit.cpp"
+#include "../utilities/include/convert.h"
+#include "../utilities/include/transcode.h"
+#include "../utilities/include/transmit.h"
 
 using namespace std;
 

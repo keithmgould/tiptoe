@@ -1,4 +1,5 @@
-// TODO: add header guards for this?
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
 
 #define SAMPLE_RATE   (48000) // 8000 * 6
@@ -32,3 +33,5 @@
 // 1 : show only data
 // 2 : show data and more
 #define DEBUG_MODE (0)
+
+#endif

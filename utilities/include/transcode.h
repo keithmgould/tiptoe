@@ -1,4 +1,6 @@
 #ifndef TRANSCODE_H
+#define TRANSCODE_H
+
 #include <vector>
 #include <iostream>
 using namespace std;

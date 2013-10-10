@@ -1,3 +1,6 @@
+#ifndef CONVERT_H
+#define CONVERT_H
+
 #include <bitset>
 #include <vector>
 #include <iostream>
@@ -25,4 +28,5 @@ class Convert
   };
 };
 
+#endif
 
