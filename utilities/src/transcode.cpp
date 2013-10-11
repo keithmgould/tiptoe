@@ -1,4 +1,8 @@
-static void Transcode::AddPreamble(vector<bool> &rawBits, vector<bool> &transcodedBits)
+#include <iostream>
+#include "../include/constants.h"
+#include "../include/transcode.h"
+
+void Transcode::AddPreamble(vector<bool> &rawBits, vector<bool> &transcodedBits)
 {
   // First place the preamble.
   // Takes us from PREAMBLE_LOW to MIDDLE_HIGH
@@ -9,7 +13,7 @@ static void Transcode::AddPreamble(vector<bool> &rawBits, vector<bool> &transcod
   transcodedBits.push_back(0);
 }
 
-static void Transcode::Perform(vector<bool> &rawBits, vector<bool> &transcodedBits)
+void Transcode::Perform(vector<bool> &rawBits, vector<bool> &transcodedBits)
 {
   Transcode::AddPreamble(rawBits, transcodedBits);
   // The preamble leaves us at the Middle High frequency.

@@ -1,4 +1,8 @@
-static void Convert::UnsignedCharToBits(unsigned char inputBytes[], vector<bool> &dataBits, int byteCount)
+#include <iostream>
+#include "../include/constants.h"
+#include "../include/convert.h"
+
+void Convert::UnsignedCharToBits(unsigned char inputBytes[], vector<bool> &dataBits, int byteCount)
 {
   for(int i = 0; i < byteCount; i++)
   {
@@ -15,7 +19,7 @@ static void Convert::UnsignedCharToBits(unsigned char inputBytes[], vector<bool>
   }
 }
 
-static void Convert::BitsToUnsignedChar(vector<bool> &inputBits, unsigned char outputBytes[], int byteCount)
+void Convert::BitsToUnsignedChar(vector<bool> &inputBits, unsigned char outputBytes[], int byteCount)
 {
   octet o;
   for(int i=0; i<byteCount; i++ )

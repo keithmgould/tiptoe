@@ -1,12 +1,22 @@
-CXX = g++
 INCLUDE = /Users/keith/source/portaudio/include/
-LIB = /Users/keith/source/portaudio/lib/.libs/
-all: main
 
 vpath %.cpp ../utilities/src
 
-main: main.cpp transmit.cpp transcode.cpp convert.cpp
-	$(CXX) -o main $< -I$(INCLUDE) -L$(LIB) -lportaudio
+main: main.o transmit.o transcode.o convert.o
+	g++ -o main main.o transmit.o transcode.o convert.o -lportaudio
+	rm *.o
+
+main.o: main.cpp
+	g++ -c main.cpp -I$(INCLUDE)
+
+transmit.o: transmit.cpp
+	g++ -c $<
+
+transcode.o: transcode.cpp
+	g++ -c $<
+
+convert.o: convert.cpp
+	g++ -c $<
 
 clean:
 	rm ./main
