@@ -2,6 +2,7 @@
 #define HAMMING_H
 
 #include <math.h>
+#include <vector>
 #include <bitset>
 #include <Eigen/Dense>
 

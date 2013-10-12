@@ -1,3 +1,5 @@
+#include "../include/hamming.h"
+
 Hamming::Hamming(int parity_bit_length)
 {
   this->parity_bit_length = parity_bit_length;

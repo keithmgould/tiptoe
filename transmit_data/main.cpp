@@ -13,9 +13,31 @@ using namespace std;
 
 typedef short SAMPLE;
 
+/*----------------------------------------------------------------
+ * Callback Data.  Persists across buffers.  Used here to hold on
+ * to large objects that take time to instantiate.  The Transmitter
+ * stores the waveforms, for example.
+ */
+typedef struct
+{
+  // Points to the instance of codec2
+  // CODEC2                  *codec2;
+
+  Transcode               *transcoder;
+  // Points to the instance of the transmitter, which holds
+  // waveforms that are expensive to compute, so we do this
+  // only once.
+  Transmitter             *transmitter;
+
+  // Used to ensure both sides of the conversation are in
+  // sync.
+  int                     bufferCounter;
+}
+callbackData;
+
 static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData )
 {
-  Transmitter *transmitter = (Transmitter*)userData;
+  callbackData *data = (callbackData*)userData;
   SAMPLE *out = (SAMPLE*)outputBuffer;
 
   (void) timeInfo; /* Prevent unused variable warnings. */
@@ -29,9 +51,9 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
   vector<bool> dataBits;
   vector<bool> transcodedBits;
   Convert::UnsignedCharToBits(faux, dataBits, 6);
-  Transcode::Perform(dataBits, transcodedBits);
-  transmitter->setBits(transcodedBits);
-  transmitter->emitSound(out);
+  data->transcoder->perform(dataBits, transcodedBits);
+  data->transmitter->setBits(transcodedBits);
+  data->transmitter->emitSound(out);
   return paContinue;
 }
 
@@ -41,12 +63,20 @@ int main(void)
   PaStreamParameters outputParameters;
   PaStream *stream;
   PaError err;
+  callbackData data;
+
+  Transcode transcoder;
+  data.transcoder = &transcoder;
+
   Transmitter transmitter(FRAMES_PER_BUFFER);
+  data.transmitter = &transmitter;
+
+  data.bufferCounter = 0;
 
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
-  outputParameters.device = 2;// Pa_GetDefaultOutputDevice(); /* default output device */
+  outputParameters.device = 3;// Pa_GetDefaultOutputDevice(); /* default output device */
   if (outputParameters.device == paNoDevice) {
     fprintf(stderr,"Error: No default output device.\n");
     goto error;
@@ -64,7 +94,7 @@ int main(void)
       FRAMES_PER_BUFFER,
       paClipOff,
       transmitCallback,
-      &transmitter );
+      &data );
   if( err != paNoError ) goto error;
 
   err = Pa_StartStream( stream );
