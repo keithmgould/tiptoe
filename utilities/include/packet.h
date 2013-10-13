@@ -9,11 +9,11 @@
 
 using namespace std;
 
-class Transcode
+class Packet
 {
   public:
-  Transcode() : hamming(7) {}
-  void perform(vector<bool> &rawBits, vector<bool> &transcodedBits);
+  Packet() : hamming(7) {}
+  void build(vector<bool> &rawBits, vector<bool> &transcodedBits);
   private:
   Hamming hamming;
   void add_preamble_to_finalPacket(vector<bool> &finalPacket);

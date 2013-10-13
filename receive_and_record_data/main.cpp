@@ -62,8 +62,10 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
   Extract extract(demodulatedBits, data->remainingBits);
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
-  ReverseTranscode reverse_transcode(extractedBits, 48);
-  reverse_transcode.perform(bits);
+
+  // This is what needs to change.
+  // ReverseTranscode reverse_transcode(extractedBits, 48);
+  // reverse_transcode.perform(bits);
 
   // used for testing...
   if(bits.size() > 0) { data->bits.push_back(bits); }

@@ -1,4 +1,4 @@
-#include "../include/transcode.h"
+#include "../include/packet.h"
 /*
   Transcoding will create the "packet" sent across the wire/air.
   The packet is 107 bits and structured as follows:
@@ -15,7 +15,7 @@
   rawBits: the incoming raw data.  48 bits long.
   finalTranscodedBits: the outgoing transcoded bits.  < 107 bits long.
 */
-void Transcode::perform(vector<bool> &rawBits, vector<bool> &finalPacket)
+void Packet::build(vector<bool> &rawBits, vector<bool> &finalPacket)
 {
   // first add the 5 preamble bits to the final packet
   add_preamble_to_finalPacket(finalPacket);
@@ -65,12 +65,12 @@ void Transcode::perform(vector<bool> &rawBits, vector<bool> &finalPacket)
   }
 }
 
-void Transcode::add_bits_to_finalPacket(vector<bool> &bits, vector<bool> &finalPacket)
+void Packet::add_bits_to_finalPacket(vector<bool> &bits, vector<bool> &finalPacket)
 {
   finalPacket.insert(finalPacket.end(), bits.begin(), bits.end());
 }
 
-void Transcode::add_preamble_to_finalPacket(vector<bool> &finalPacket)
+void Packet::add_preamble_to_finalPacket(vector<bool> &finalPacket)
 {
   finalPacket.push_back(1);
   finalPacket.push_back(1);
@@ -82,7 +82,7 @@ void Transcode::add_preamble_to_finalPacket(vector<bool> &finalPacket)
 /*
  add alternating 1s and 0s until there are total_size bits.
  */
-void Transcode::add_buffer_bits(vector<bool> &transcodedBits, int total_size)
+void Packet::add_buffer_bits(vector<bool> &transcodedBits, int total_size)
 {
   int val = 0;
   while(transcodedBits.size() < total_size)
@@ -92,7 +92,7 @@ void Transcode::add_buffer_bits(vector<bool> &transcodedBits, int total_size)
   }
 }
 
-void Transcode::determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &parityBits)
+void Packet::determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &parityBits)
 {
 
   // the hamming 7 parity bit encoder wants 120 bits
@@ -144,7 +144,7 @@ void Transcode::determine_parity_bits(vector<bool> &transcodedBits, vector<bool>
   TODO: I'm not sure what to do about this yet...
 
 */
-void Transcode::transcode_bits(vector<bool> &rawBits, vector<bool> &transcodedBits)
+void Packet::transcode_bits(vector<bool> &rawBits, vector<bool> &transcodedBits)
 {
   int frequency = MIDDLE_HIGH;
 
