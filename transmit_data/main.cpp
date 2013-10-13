@@ -52,6 +52,11 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
   vector<bool> transcodedBits;
   Convert::UnsignedCharToBits(faux, dataBits, 6);
   data->transcoder->perform(dataBits, transcodedBits);
+  // for(int i=0;i<transcodedBits.size(); i++)
+  // {
+    // cout << transcodedBits.at(i);
+  // }
+  // cout << endl;
   data->transmitter->setBits(transcodedBits);
   data->transmitter->emitSound(out);
   return paContinue;

@@ -1,5 +1,6 @@
 #include "../include/hamming.h"
-
+#include <iostream>
+using namespace std;
 Hamming::Hamming(int parity_bit_length)
 {
   this->parity_bit_length = parity_bit_length;

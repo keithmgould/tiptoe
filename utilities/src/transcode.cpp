@@ -5,25 +5,54 @@
 
   bits - usage
   5    - preamble
-  5    - bufferCounter
+  7-14 - 7 bit parity hamming error correctig code (transcoded), based on transcodedBits
   90   - transcodedBits.
-  7    - 7 bit parity hamming error correctig code, based on bufferCounter and transcodedBits
 */
 
 /*
   Arguments:
 
   rawBits: the incoming raw data.  48 bits long.
-  transcodedBits: the outgoing transcoded bits.  < 107 bits long.
-  bufferCounter: the 5 bit integer used to ensure both sides
-                 stay in sync.
+  finalTranscodedBits: the outgoing transcoded bits.  < 107 bits long.
 */
-void Transcode::perform(vector<bool> &rawBits, vector<bool> &transcodedBits)
+void Transcode::perform(vector<bool> &rawBits, vector<bool> &finalPacket)
 {
-  add_preamble_bits(transcodedBits);
-  add_transcoded_bits(rawBits, transcodedBits);
-  add_buffer_bits(transcodedBits);
-  add_hamming_bits(transcodedBits);
+  // first add the 5 preamble bits to the final packet
+  add_preamble_to_finalPacket(finalPacket);
+
+  // transcode the raw 48 bits of data
+  vector<bool> transcodedBits;
+  transcode_bits(rawBits, transcodedBits);
+
+  // if transcoded data is < 90 bits, buffer
+  add_buffer_bits(transcodedBits, 90);
+
+  // determine the 7 parity bits for the 90 transcoded bits
+  vector<bool> parityBits;
+  determine_parity_bits(transcodedBits, parityBits);
+
+  // cout << "pb of length " << parityBits.size() << ": " ;
+  // for(int i=0; i< parityBits.size();i++)
+  // {
+    // cout << parityBits.at(i);
+  // }
+  // cout << endl;
+
+  // transcode the 7 parity bits
+  vector<bool> transcodedParityBits;
+  transcode_bits(parityBits, transcodedParityBits);
+
+  // cout << "transcoded of length: " << transcodedParityBits.size() << ": " ;
+  // for(int i=0; i< transcodedParityBits.size();i++)
+  // {
+    // cout << transcodedParityBits.at(i);
+  // }
+  // cout << endl;
+
+
+  // add the transcoded parity bits, then the transcoded data
+  add_bits_to_finalPacket(transcodedParityBits, finalPacket);
+  add_bits_to_finalPacket(transcodedBits, finalPacket);
 
   if (DEBUG_MODE > 1 )
   {
@@ -36,47 +65,62 @@ void Transcode::perform(vector<bool> &rawBits, vector<bool> &transcodedBits)
   }
 }
 
-void Transcode::add_preamble_bits(vector<bool> &transcodedBits)
+void Transcode::add_bits_to_finalPacket(vector<bool> &bits, vector<bool> &finalPacket)
 {
-  transcodedBits.push_back(1);
-  transcodedBits.push_back(1);
-  transcodedBits.push_back(1);
-  transcodedBits.push_back(1);
-  transcodedBits.push_back(0);
+  finalPacket.insert(finalPacket.end(), bits.begin(), bits.end());
+}
+
+void Transcode::add_preamble_to_finalPacket(vector<bool> &finalPacket)
+{
+  finalPacket.push_back(1);
+  finalPacket.push_back(1);
+  finalPacket.push_back(1);
+  finalPacket.push_back(1);
+  finalPacket.push_back(0);
 }
 
 /*
- if the transcoding process produced less than 90
- bits (very very likely) then add alternating 1s
- and 0s until there are 90 bits.
-
- using 95 as the counter because the preamble (5 bits)
- has already been added in.
+ add alternating 1s and 0s until there are total_size bits.
  */
-void Transcode::add_buffer_bits(vector<bool> &transcodedBits)
+void Transcode::add_buffer_bits(vector<bool> &transcodedBits, int total_size)
 {
   int val = 0;
-  while(transcodedBits.size() < 95)
+  while(transcodedBits.size() < total_size)
   {
     transcodedBits.push_back(val);
     val = (val + 1) % 2;
   }
 }
 
-void Transcode::add_hamming_bits(vector<bool> &transcodedBits)
+void Transcode::determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &parityBits)
 {
-  vector<bool> foo;
 
-  foo.push_back(1);
-  foo.push_back(0);
-  foo.push_back(1);
-  foo.push_back(0);
+  // the hamming 7 parity bit encoder wants 120 bits
+  int remaining = 120 - transcodedBits.size();
+  for(int i=0; i < remaining; i++)
+  {
+    transcodedBits.push_back(0);
+  }
+
+  // cout << "tb: ";
+  // for(int i=0; i< transcodedBits.size();i++)
+  // {
+    // cout << transcodedBits.at(i);
+  // }
+  // cout << endl;
+
   vector<bool> encodedBits;
-
-  hamming.encode(foo, encodedBits);
+  hamming.encode(transcodedBits, encodedBits);
+  // cout << "eb: ";
+  // for(int i=0; i< encodedBits.size();i++)
+  // {
+    // cout << encodedBits.at(i);
+  // }
+  // cout << endl;
+  parityBits.assign(encodedBits.begin(), encodedBits.begin()+7);
 }
 /*
-  Add Transcoded Bits:
+  Transcode Bits:
 
   The preamble leaves us at the Middle High frequency.
   The frequency variable is used to keep track of which frequency
@@ -100,7 +144,7 @@ void Transcode::add_hamming_bits(vector<bool> &transcodedBits)
   TODO: I'm not sure what to do about this yet...
 
 */
-void Transcode::add_transcoded_bits(vector<bool> &rawBits, vector<bool> &transcodedBits)
+void Transcode::transcode_bits(vector<bool> &rawBits, vector<bool> &transcodedBits)
 {
   int frequency = MIDDLE_HIGH;
 
@@ -133,4 +177,3 @@ void Transcode::add_transcoded_bits(vector<bool> &rawBits, vector<bool> &transco
     }
   }
 }
-

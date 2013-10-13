@@ -12,14 +12,17 @@ using namespace std;
 class Transcode
 {
   public:
-  Transcode() : hamming(4) {}
+  Transcode() : hamming(7) {}
   void perform(vector<bool> &rawBits, vector<bool> &transcodedBits);
   private:
   Hamming hamming;
-  void add_preamble_bits(vector<bool> &transcodedBits);
-  void add_transcoded_bits(vector<bool> &rawBits, vector<bool> &transcodedBits);
-  void add_buffer_bits(vector<bool> &transcodedBits);
-  void add_hamming_bits(vector<bool> &transcodedBits);
+  void add_preamble_to_finalPacket(vector<bool> &finalPacket);
+  void transcode_bits(vector<bool> &rawBits, vector<bool> &transcodedBits);
+  void add_buffer_bits(vector<bool> &transcodedBits, int total_size);
+  void determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &parityBits);
+  void transcode_parity_bits(vector<bool> &parityBits, vector<bool> &transcodedParityBits);
+  void add_bits_to_finalPacket(vector<bool> &bits, vector<bool> &finalPacket);
 };
+
 
 #endif
