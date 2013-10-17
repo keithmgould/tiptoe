@@ -1,6 +1,6 @@
-#include "../include/packet.h"
+#include "../include/packer.h"
 /*
-  Transcoding will create the "packet" sent across the wire/air.
+  The Packer will create the "packet" sent across the wire/air.
   The packet is 107 bits and structured as follows:
 
   bits - usage
@@ -13,12 +13,12 @@
   Arguments:
 
   rawBits: the incoming raw data.  48 bits long.
-  finalTranscodedBits: the outgoing transcoded bits.  < 107 bits long.
+  packet: the outgoing transcoded bits.  < 107 bits long.
 */
-void Packet::build(vector<bool> &rawBits, vector<bool> &finalPacket)
+void Packer::build(vector<bool> &rawBits, vector<bool> &packet)
 {
   // first add the 5 preamble bits to the final packet
-  add_preamble_to_finalPacket(finalPacket);
+  add_preamble_to_packet(packet);
 
   // transcode the raw 48 bits of data
   vector<bool> transcodedBits;
@@ -51,8 +51,8 @@ void Packet::build(vector<bool> &rawBits, vector<bool> &finalPacket)
 
 
   // add the transcoded parity bits, then the transcoded data
-  add_bits_to_finalPacket(transcodedParityBits, finalPacket);
-  add_bits_to_finalPacket(transcodedBits, finalPacket);
+  add_bits_to_packet(transcodedParityBits, packet);
+  add_bits_to_packet(transcodedBits, packet);
 
   if (DEBUG_MODE > 1 )
   {
@@ -65,24 +65,24 @@ void Packet::build(vector<bool> &rawBits, vector<bool> &finalPacket)
   }
 }
 
-void Packet::add_bits_to_finalPacket(vector<bool> &bits, vector<bool> &finalPacket)
+void Packer::add_bits_to_packet(vector<bool> &bits, vector<bool> &packet)
 {
-  finalPacket.insert(finalPacket.end(), bits.begin(), bits.end());
+  packet.insert(packet.end(), bits.begin(), bits.end());
 }
 
-void Packet::add_preamble_to_finalPacket(vector<bool> &finalPacket)
+void Packer::add_preamble_to_packet(vector<bool> &packet)
 {
-  finalPacket.push_back(1);
-  finalPacket.push_back(1);
-  finalPacket.push_back(1);
-  finalPacket.push_back(1);
-  finalPacket.push_back(0);
+  packet.push_back(1);
+  packet.push_back(1);
+  packet.push_back(1);
+  packet.push_back(1);
+  packet.push_back(0);
 }
 
 /*
  add alternating 1s and 0s until there are total_size bits.
  */
-void Packet::add_buffer_bits(vector<bool> &transcodedBits, int total_size)
+void Packer::add_buffer_bits(vector<bool> &transcodedBits, int total_size)
 {
   int val = 0;
   while(transcodedBits.size() < total_size)
@@ -92,7 +92,7 @@ void Packet::add_buffer_bits(vector<bool> &transcodedBits, int total_size)
   }
 }
 
-void Packet::determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &parityBits)
+void Packer::determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &parityBits)
 {
 
   // the hamming 7 parity bit encoder wants 120 bits
@@ -144,7 +144,7 @@ void Packet::determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &p
   TODO: I'm not sure what to do about this yet...
 
 */
-void Packet::transcode_bits(vector<bool> &rawBits, vector<bool> &transcodedBits)
+void Packer::transcode_bits(vector<bool> &rawBits, vector<bool> &transcodedBits)
 {
   int frequency = MIDDLE_HIGH;
 

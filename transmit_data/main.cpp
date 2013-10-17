@@ -6,7 +6,7 @@
 #include "portaudio.h"
 #include "../utilities/include/constants.h"
 #include "../utilities/include/convert.h"
-#include "../utilities/include/packet.h"
+#include "../utilities/include/packer.h"
 #include "../utilities/include/transmit.h"
 
 using namespace std;
@@ -23,7 +23,7 @@ typedef struct
   // Points to the instance of codec2
   // CODEC2                  *codec2;
 
-  Packet               *packet;
+  Packer               *packer;
   // Points to the instance of the transmitter, which holds
   // waveforms that are expensive to compute, so we do this
   // only once.
@@ -51,7 +51,7 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
   vector<bool> dataBits;
   vector<bool> transcodedBits;
   Convert::UnsignedCharToBits(faux, dataBits, 6);
-  data->packet->build(dataBits, transcodedBits);
+  data->packer->build(dataBits, transcodedBits);
   // for(int i=0;i<transcodedBits.size(); i++)
   // {
     // cout << transcodedBits.at(i);
@@ -70,8 +70,8 @@ int main(void)
   PaError err;
   callbackData data;
 
-  Packet packet;
-  data.packet = &packet;
+  Packer packer;
+  data.packer = &packer;
 
   Transmitter transmitter(FRAMES_PER_BUFFER);
   data.transmitter = &transmitter;
