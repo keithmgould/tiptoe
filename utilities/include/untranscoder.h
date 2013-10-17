@@ -7,9 +7,7 @@ using namespace std;
 class Untranscoder
 {
   public:
-  Untranscoder() : bitsUsed(0) {}
-  int bitsUsed;
-  void untranscode(vector<bool> &transcoded, vector<bool> &data, int maxBits = -1)
-}
+  static void Untranscode(vector<bool> &transcoded, vector<bool> &data, int maxBits = -1);
+};
 
 #endif
