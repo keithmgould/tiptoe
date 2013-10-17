@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "../src/constants.cpp"
+#include "../include/constants.h"
 #include "../src/hamming.cpp"
 #include <vector>
 
