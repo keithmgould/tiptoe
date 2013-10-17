@@ -6,6 +6,7 @@
 #include <bitset>
 #include "constants.h"
 #include "../include/hamming.h"
+#include "../include/transcoder.h"
 
 using namespace std;
 
@@ -17,7 +18,6 @@ class Packer
   private:
   Hamming hamming;
   void add_preamble_to_packet(vector<bool> &packet);
-  void transcode_bits(vector<bool> &rawBits, vector<bool> &transcodedBits);
   void add_buffer_bits(vector<bool> &transcodedBits, int total_size);
   void determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &parityBits);
   void transcode_parity_bits(vector<bool> &parityBits, vector<bool> &transcodedParityBits);
