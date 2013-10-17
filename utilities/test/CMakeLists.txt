@@ -15,6 +15,7 @@ set(
     sources 
     main.cpp
     convert_test.cpp
+    extract_test.cpp
     hamming_test.cpp
     $ENV{TIPTOE_HOME}/utilities/include/hamming.h
     transcoder_test.cpp
