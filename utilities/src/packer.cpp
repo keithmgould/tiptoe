@@ -94,7 +94,7 @@ void Packer::add_buffer_bits(vector<bool> &transcodedBits, int total_size)
 
 void Packer::determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &parityBits)
 {
-
+  int size = transcodedBits.size();
   // the hamming 7 parity bit encoder wants 120 bits
   int remaining = 120 - transcodedBits.size();
   for(int i=0; i < remaining; i++)
@@ -111,6 +111,10 @@ void Packer::determine_parity_bits(vector<bool> &transcodedBits, vector<bool> &p
 
   vector<bool> encodedBits;
   hamming.encode(transcodedBits, encodedBits);
+
+  // now cut off those extra zeros from transcodedBits
+  transcodedBits.resize(size);
+
   // cout << "eb: ";
   // for(int i=0; i< encodedBits.size();i++)
   // {

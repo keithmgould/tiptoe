@@ -5,8 +5,8 @@
 #include <vector>
 #include <bitset>
 #include "constants.h"
-#include "../include/hamming.h"
-#include "../include/transcoder.h"
+#include "hamming.h"
+#include "transcoder.h"
 
 using namespace std;
 
