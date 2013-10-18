@@ -41,6 +41,9 @@ void Transmitter::emitSound( short *out )
       nextSinusoid = false;
       phase = 0;
     }
+
+    // Here we play with amplitude, shaping it to look like spoken
+    // words in order to trick the telco codecs.
     amp = 0.5;
     if( i <= (fpb / 2))
     {
