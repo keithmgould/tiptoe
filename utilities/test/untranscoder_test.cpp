@@ -10,8 +10,10 @@ TEST (untranscoder, perform_with_less_than_max_bits) {
   vector<bool> correctDataBits (correctDataBitsArr, correctDataBitsArr + sizeof(correctDataBitsArr) / sizeof(bool) );
 
   vector<bool> dataBits;
-  Untranscoder::Untranscode(extractedBits, dataBits);
+  int bitsUsed = 0;
+  Untranscoder::Untranscode(extractedBits, dataBits, bitsUsed);
   ASSERT_TRUE(correctDataBits == dataBits);
+  ASSERT_TRUE(bitsUsed == 10);
 }
 
 TEST (untranscoder, perform_with_more_than_max_bits) {
@@ -23,7 +25,8 @@ TEST (untranscoder, perform_with_more_than_max_bits) {
   vector<bool> correctDataBits (correctDataBitsArr, correctDataBitsArr + sizeof(correctDataBitsArr) / sizeof(bool) );
 
   vector<bool> dataBits;
-
-  Untranscoder::Untranscode(extractedBits, dataBits, 5);
+  int bitsUsed = 0;
+  Untranscoder::Untranscode(extractedBits, dataBits, bitsUsed, 5);
   ASSERT_TRUE(correctDataBits == dataBits);
+  ASSERT_TRUE(bitsUsed == 9);
 }

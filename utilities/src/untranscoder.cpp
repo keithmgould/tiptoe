@@ -1,9 +1,9 @@
 #include "../include/untranscoder.h"
 
-void Untranscoder::Untranscode(vector<bool> &transcoded, vector<bool> &data, int maxBits)
+void Untranscoder::Untranscode(vector<bool> &transcoded, vector<bool> &data, int &bitsUsed, int maxBits)
 {
   data.clear();
-  int bitsUsed = 0;
+  bitsUsed = 0;
   int frequency = MIDDLE_HIGH;
   bool skip = false;
   if(DEBUG_MODE > 1) { cout << "ext:"; }
@@ -11,12 +11,16 @@ void Untranscoder::Untranscode(vector<bool> &transcoded, vector<bool> &data, int
   {
     bitsUsed++;
     if(DEBUG_MODE > 1) { cout << transcoded.at(i); }
-    if(skip == false)
+    if(skip)
     {
-      data.push_back(transcoded.at(i));
-      if(maxBits > 0 && data.size() == maxBits) { break; }
-    }else{
       skip = false;
+    }else{
+      data.push_back(transcoded.at(i));
+      if(maxBits > 0 && data.size() == maxBits)
+      {
+        bitsUsed++;
+        break;
+      }
     }
 
     if(transcoded.at(i) == 1)
