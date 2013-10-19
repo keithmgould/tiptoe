@@ -31,7 +31,6 @@ void Transcoder::Transcode(vector<bool> &rawBits, vector<bool> &transcodedBits)
   for(int i = 0; i < rawBits.size(); i++)
   {
     // Here we have a direct mapping between input and output
-    if(DEBUG_MODE > 1) { cout << rawBits.at(i); }
     if(rawBits.at(i) == 1)
     {
       transcodedBits.push_back(1);
