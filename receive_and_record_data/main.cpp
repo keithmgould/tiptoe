@@ -61,11 +61,11 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
   data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
   vector<bool> demodulatedBits;
   Demodulator::Perform(deltas, demodulatedBits);
-  Printer::print("demodulated bits", demodulatedBits);
+  // Printer::print("demodulated bits", demodulatedBits);
   Extractor extract(demodulatedBits, data->remainingBits);
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
-  Printer::print("extracted bits", extractedBits);
+  // Printer::print("extracted bits", extractedBits);
   if(extractedBits.size() > 0)
   {
     data->unpacker->unpack(extractedBits, bits);

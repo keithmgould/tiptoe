@@ -1,5 +1,3 @@
-PORTAUDIO_INCLUDE = /Users/keith/source/portaudio/include/
-
 vpath %.cpp ../utilities/src
 
 main: main.o transmitter.o hamming.o packer.o converter.o transcoder.o printer.o
@@ -7,7 +5,7 @@ main: main.o transmitter.o hamming.o packer.o converter.o transcoder.o printer.o
 	rm *.o
 
 main.o: main.cpp
-	g++ -c main.cpp -I$(PORTAUDIO_INCLUDE) -I$(EIGEN_HOME)
+	g++ -c main.cpp -I$(PORTAUDIO_HOME)/include/ -I$(EIGEN_HOME)
 
 transmitter.o: transmitter.cpp
 	g++ -c $<
