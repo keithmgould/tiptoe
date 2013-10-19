@@ -13,25 +13,30 @@ void Unpacker::unpack(vector<bool> &packet, vector<bool> &data)
   // many of the packets bits were used to do this.
   int bitsUsed;
   vector<bool> parityBits;
-  Untranscoder::untranscode(packet, parityBits, bitsUsed, 7);
+  Untranscoder::Untranscode(packet, parityBits, bitsUsed, 7);
+
+  // add the raw parity bits to the payload, as hamming.decode
+  // expects the form: parity bits | data bits
+  vector<bool> payload;
+  payload.assign( parityBits.begin(), parityBits.end() );
 
   // extract the remaining 90 bit payload, starting after the
   // bits that were used to hold the parity bits, and tossing
   // any buffer afterwards
-  vector<bool> payload;
-  payload.assign(packet.begin() + bitsUsed, packet.begin() + bitsUsed + 90);
+  payload.insert(payload.end(), packet.begin() + bitsUsed, packet.begin() + bitsUsed + 90);
 
-  // ensure the payload is 120 bits by adding 0s
-  int remaining = 120 - payload.size();
+  // ensure the payload is 127 bits by adding 0s
+  int remaining = 127 - payload.size();
   for(int i=0; i < remaining; i++)
   {
     payload.push_back(0);
   }
+
   // now do a parity check against the remaining 120 bit payload
   vector<bool> correctedPayload;
   hamming.decode(payload, correctedPayload);
 
   // finally untranscode the corrected payload
-  Untranscoder::untranscode(correctedPayload, data, bitsUsed);
+  Untranscoder::Untranscode(correctedPayload, data, bitsUsed, 48);
 }
 

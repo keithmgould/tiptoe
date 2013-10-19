@@ -123,6 +123,22 @@ TEST(hamming, decode_with_no_errors_with_4_parity_bits)
   ASSERT_THAT(output, testing::ContainerEq(correct));
 }
 
+// TEST(hamming, decode_with_no_errors_with_7_parity_bits)
+// {
+  // Hamming ham(7);
+  // bool input_bool[120] = { 1,0,1,0,0,1,0,0,1,1,1,0,1,0,0,1,0,1,0,0,1,1,0,1,0,1,1,0,1,0,0,1,0,0,1,1,0,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,0,0,1,1,0,0,1,1,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  // vector<bool> input;
+  // input.insert(input.begin(), input_bool, input_bool+120);
+
+  // bool correct_bool[11] = { 1,0,1,0,1,0,1,0,1,0,1 };
+  // vector<bool> correct;
+  // correct.insert(correct.begin(), correct_bool, correct_bool+11);
+
+  // vector<bool> output;
+  // ham.decode(input, output);
+  // ASSERT_THAT(output, testing::ContainerEq(correct));
+// }
+
 TEST(hamming, decode_with_1_error_with_3_parity_bits)
 {
   Hamming ham(3);
@@ -151,3 +167,4 @@ TEST(hamming, decode_with_1_error_with_4_parity_bits)
   ham.decode(input, output);
   ASSERT_THAT(output, testing::ContainerEq(correct));
 }
+

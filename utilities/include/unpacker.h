@@ -3,6 +3,9 @@
 
 #include <vector>
 #include "untranscoder.h"
+#include "hamming.h"
+#include "printer.h"
+
 using namespace std;
 
 class Unpacker
@@ -12,6 +15,6 @@ class Unpacker
   void unpack(vector<bool> &packet, vector<bool> &dataBits);
   private:
   Hamming hamming;
-}
+};
 
 #endif

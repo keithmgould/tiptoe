@@ -19,6 +19,7 @@ set(
     hamming_test.cpp
     $ENV{TIPTOE_HOME}/utilities/include/hamming.h
     transcoder_test.cpp
+    unpacker_test.cpp
     untranscoder_test.cpp
    )
 
