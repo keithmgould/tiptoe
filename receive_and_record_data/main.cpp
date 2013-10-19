@@ -5,10 +5,12 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include "../utilities/include/printer.h"
 #include "../utilities/include/constants.h"
 #include "../utilities/include/delta_finder.h"
 #include "../utilities/include/demodulator.h"
 #include "../utilities/include/extractor.h"
+#include "../utilities/include/unpacker.h"
 #include "../utilities/include/untranscoder.h"
 
 #define NUM_SECONDS     (1)
@@ -35,6 +37,7 @@ typedef struct
     float       lastBuffersLastSample;
     vector < vector<bool> > bits;                 // hold the data for testing
     vector<bool> remainingBits;
+    Unpacker    *unpacker;
 
 }
 paTestData;
@@ -58,13 +61,15 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
   data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
   vector<bool> demodulatedBits;
   Demodulator::Perform(deltas, demodulatedBits);
+  Printer::print("demodulated bits", demodulatedBits);
   Extractor extract(demodulatedBits, data->remainingBits);
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
-
-  // This is what needs to change.
-  // ReverseTranscode reverse_transcode(extractedBits, 48);
-  // reverse_transcode.perform(bits);
+  Printer::print("extracted bits", extractedBits);
+  if(extractedBits.size() > 0)
+  {
+    data->unpacker->unpack(extractedBits, bits);
+  }
 
   // used for testing...
   if(bits.size() > 0) { data->bits.push_back(bits); }
@@ -133,6 +138,9 @@ int main(void)
     int                 numBytes;
     SAMPLE              max, val;
     double              average;
+
+    Unpacker            unpacker;
+    data.unpacker = &unpacker;
 
     data.maxFrameIndex = numSamples = NUM_SECONDS * SAMPLE_RATE;
     data.frameIndex = 0;

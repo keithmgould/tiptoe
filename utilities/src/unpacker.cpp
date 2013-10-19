@@ -8,12 +8,15 @@
 
 void Unpacker::unpack(vector<bool> &packet, vector<bool> &data)
 {
+  if(DEBUG_MODE > 1) { Printer::print("packet", packet); }
   // first extract the parity bits by performing untranscode until
   // we have 7 bits of untranscoded data.  We pay attention to how
   // many of the packets bits were used to do this.
   int bitsUsed;
   vector<bool> parityBits;
   Untranscoder::Untranscode(packet, parityBits, bitsUsed, 7);
+
+  if(DEBUG_MODE > 1) { Printer::print("parity bits", parityBits); }
 
   // add the raw parity bits to the payload, as hamming.decode
   // expects the form: parity bits | data bits
