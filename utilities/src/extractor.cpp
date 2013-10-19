@@ -24,24 +24,12 @@
  *    store everything for next buffer
  */
 
-#include <vector>
-#include <utility>
-using namespace std;
 
-class Extract
-{
-  public:
-  vector<bool> totalRawBits;
-
-  Extract (vector<bool> &newRawBits, vector<bool> &previousRawBits); // constructor
-  void perform(vector<bool> &extractedBits, vector<bool> &remainingRawBits);
-  pair <int, int> findPreambles();
-};
 
 /*
  * The Constructor
  */
-Extract::Extract (vector<bool> &newRawBits, vector<bool> &previousRawBits)
+Extractor::Extractor (vector<bool> &newRawBits, vector<bool> &previousRawBits)
 {
   if(DEBUG_MODE > 1)
   {

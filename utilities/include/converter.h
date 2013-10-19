@@ -1,12 +1,12 @@
-#ifndef CONVERT_H
-#define CONVERT_H
+#ifndef CONVERTER_H
+#define CONVERTER_H
 
 #include <bitset>
 #include <vector>
 #include <iostream>
 
 using namespace std;
-class Convert
+class Converter
 {
   public:
   static void UnsignedCharToBits(unsigned char inputBytes[], vector<bool> &dataBits, int byteCount);

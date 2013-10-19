@@ -2,14 +2,14 @@ PORTAUDIO_INCLUDE = /Users/keith/source/portaudio/include/
 
 vpath %.cpp ../utilities/src
 
-main: main.o transmit.o hamming.o packer.o convert.o transcoder.o printer.o
-	g++ -o main main.o transmit.o hamming.o packer.o convert.o transcoder.o printer.o -I$(EIGEN_HOME) -lportaudio
+main: main.o transmitter.o hamming.o packer.o converter.o transcoder.o printer.o
+	g++ -o main main.o transmitter.o hamming.o packer.o converter.o transcoder.o printer.o -I$(EIGEN_HOME) -lportaudio
 	rm *.o
 
 main.o: main.cpp
 	g++ -c main.cpp -I$(PORTAUDIO_INCLUDE) -I$(EIGEN_HOME)
 
-transmit.o: transmit.cpp
+transmitter.o: transmitter.cpp
 	g++ -c $<
 
 packer.o: packer.cpp
@@ -21,7 +21,7 @@ transcoder.o: transcoder.cpp
 hamming.o: hamming.cpp
 	g++ -c $< -I$(EIGEN_HOME)
 
-convert.o: convert.cpp
+converter.o: converter.cpp
 	g++ -c $<
 
 printer.o: printer.cpp

@@ -5,12 +5,12 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
-#include "../utilities/constants.cpp"
-#include "../utilities/delta_finder.cpp"
-#include "../utilities/demodulate.cpp"
-#include "../utilities/extract.cpp"
-#include "../utilities/reverse_transcode.cpp"
-#include "../utilities/upsample.cpp"
+#include "../utilities/include/constants.h"
+#include "../utilities/include/delta_finder.h"
+#include "../utilities/include/demodulater.h"
+#include "../utilities/include/extracter.h"
+#include "../utilities/include/untranscoder.h"
+#include "../utilities/include/upsample.h"
 
 #define NUM_SECONDS     (1)
 /* #define DITHER_FLAG     (paDitherOff) */

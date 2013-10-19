@@ -28,18 +28,12 @@
     deltas: time deltas between sinusoids
     outputBits: pointer to the demodulated data array
 */
-using namespace std;
-
-class Demodulate
+void Demodulater::Perform(vector<float>& deltas, vector<bool>& outputBits)
 {
-  public:
-    static void Perform(vector<float>& deltas, vector<bool>& outputBits)
-    {
-      bool result;
-      for(int i = 1; i != deltas.size(); i++)
-      {
-        result = (deltas.at(i) < deltas.at(i-1));
-        outputBits.push_back(result);
-      }
-    }
-};
+  bool result;
+  for(int i = 1; i != deltas.size(); i++)
+  {
+    result = (deltas.at(i) < deltas.at(i-1));
+    outputBits.push_back(result);
+  }
+}

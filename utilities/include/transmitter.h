@@ -1,5 +1,5 @@
-#ifndef TRANSMIT_H
-#define TRANSMIT_H
+#ifndef TRANSMITTER_H
+#define TRANSMITTER_H
 
 #include <math.h>
 #include <vector>

@@ -32,6 +32,6 @@
 // 0 : show nothing
 // 1 : show only data
 // 2 : show data and more
-#define DEBUG_MODE (2)
+#define DEBUG_MODE (0)
 
 #endif

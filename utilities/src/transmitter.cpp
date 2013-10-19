@@ -1,6 +1,6 @@
 #include <iostream>
 #include "../include/constants.h"
-#include "../include/transmit.h"
+#include "../include/transmitter.h"
 
 // Constructor
 Transmitter::Transmitter (int framesPerBuffer)

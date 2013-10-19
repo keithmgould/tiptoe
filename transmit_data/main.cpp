@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include "portaudio.h"
 #include "../utilities/include/constants.h"
-#include "../utilities/include/convert.h"
+#include "../utilities/include/converter.h"
 #include "../utilities/include/packer.h"
-#include "../utilities/include/transmit.h"
+#include "../utilities/include/transmitter.h"
 
 using namespace std;
 
@@ -50,7 +50,7 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
   // convert and push unsigned chars onto dataBits
   vector<bool> dataBits;
   vector<bool> transcodedBits;
-  Convert::UnsignedCharToBits(faux, dataBits, 6);
+  Converter::UnsignedCharToBits(faux, dataBits, 6);
   data->packer->build(dataBits, transcodedBits);
   // for(int i=0;i<transcodedBits.size(); i++)
   // {
