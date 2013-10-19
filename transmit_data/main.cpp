@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <cstdlib>
 #include <iostream>
 #include <csignal>
 #include <fstream>
@@ -63,8 +64,18 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
 }
 
 /*******************************************************************/
-int main(void)
+int main(int argc, char *argv[])
 {
+  int device_id;
+  if(argc != 2)
+  {
+    cout << "Usage: " <<argv[0] << " <device id (int)>" << endl;
+    cout << "try running port-audio's pa_devs binary" << endl;
+    cout << "or if you are on a Raspberry Pi, try $aplay -l" << endl;
+    exit(1);
+  }else{
+    device_id = atoi(argv[1]);
+  }
   PaStreamParameters outputParameters;
   PaStream *stream;
   PaError err;
@@ -81,7 +92,7 @@ int main(void)
   err = Pa_Initialize();
   if( err != paNoError ) goto error;
 
-  outputParameters.device = 3;// Pa_GetDefaultOutputDevice(); /* default output device */
+  outputParameters.device = device_id;// Pa_GetDefaultOutputDevice(); /* default output device */
   if (outputParameters.device == paNoDevice) {
     fprintf(stderr,"Error: No default output device.\n");
     goto error;
