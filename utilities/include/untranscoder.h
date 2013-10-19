@@ -2,7 +2,7 @@
 #define UNTRANSCODER_H
 
 #include <vector>
-
+#include "constants.h"
 using namespace std;
 
 class Untranscoder

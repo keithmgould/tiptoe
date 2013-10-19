@@ -1,4 +1,4 @@
-#include <vector>
+#include "../include/demodulator.h"
 /*
  Demodulate is based off of the demodulator described in the Hermes Paper
  by Aditya Dhananjay of NYU.
@@ -28,7 +28,7 @@
     deltas: time deltas between sinusoids
     outputBits: pointer to the demodulated data array
 */
-void Demodulater::Perform(vector<float>& deltas, vector<bool>& outputBits)
+void Demodulator::Perform(vector<float>& deltas, vector<bool>& outputBits)
 {
   bool result;
   for(int i = 1; i != deltas.size(); i++)

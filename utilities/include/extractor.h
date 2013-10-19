@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <utility>
+#include <iostream>
+#include "constants.h"
+
 using namespace std;
 
 class Extractor

@@ -1,6 +1,8 @@
 #ifndef DELTA_FINDER_H
 #define DELTA_FINDER_H
 
+#include "constants.h"
+#include <iostream>
 #include <cmath>
 #include <vector>
 using namespace std;

@@ -1,3 +1,4 @@
+#include "../include/extractor.h"
 /* Extract
  *
  * Extract's job is the opposite of Transcode's job (and then some.)
@@ -49,7 +50,7 @@ Extractor::Extractor (vector<bool> &newRawBits, vector<bool> &previousRawBits)
   this->totalRawBits.insert(this->totalRawBits.end(), newRawBits.begin(), newRawBits.end());
 }
 
-void Extract::perform(vector<bool> &extractedBits, vector<bool> &remainingBits)
+void Extractor::perform(vector<bool> &extractedBits, vector<bool> &remainingBits)
 {
   extractedBits.clear();
   remainingBits.clear();
@@ -73,7 +74,7 @@ void Extract::perform(vector<bool> &extractedBits, vector<bool> &remainingBits)
   }
 }
 
-pair <int, int> Extract::findPreambles()
+pair <int, int> Extractor::findPreambles()
 {
   pair <int, int> indexes (-1, -1);
   for(int i = 4; i < this->totalRawBits.size(); i++)

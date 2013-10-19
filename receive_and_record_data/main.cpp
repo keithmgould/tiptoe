@@ -7,10 +7,9 @@
 #include <fstream>
 #include "../utilities/include/constants.h"
 #include "../utilities/include/delta_finder.h"
-#include "../utilities/include/demodulater.h"
-#include "../utilities/include/extracter.h"
+#include "../utilities/include/demodulator.h"
+#include "../utilities/include/extractor.h"
 #include "../utilities/include/untranscoder.h"
-#include "../utilities/include/upsample.h"
 
 #define NUM_SECONDS     (1)
 /* #define DITHER_FLAG     (paDitherOff) */
@@ -58,8 +57,8 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
   data->lastBuffersLastDelta = deltas.back();
   data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
   vector<bool> demodulatedBits;
-  Demodulate::Perform(deltas, demodulatedBits);
-  Extract extract(demodulatedBits, data->remainingBits);
+  Demodulator::Perform(deltas, demodulatedBits);
+  Extractor extract(demodulatedBits, data->remainingBits);
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
 

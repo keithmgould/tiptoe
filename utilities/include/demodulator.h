@@ -1,10 +1,10 @@
-#ifndef DEMODULATE_H
-#define DEMODULATE_H
+#ifndef DEMODULATOR_H
+#define DEMODULATOR_H
 
 using namespace std;
 #include <vector>
 
-class Demodulate
+class Demodulator
 {
   public:
   static void Perform(vector<float>& deltas, vector<bool>& outputBits);
