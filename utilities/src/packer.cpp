@@ -31,37 +31,25 @@ void Packer::build(vector<bool> &rawBits, vector<bool> &packet)
   vector<bool> parityBits;
   determine_parity_bits(transcodedBits, parityBits);
 
-  // cout << "pb of length " << parityBits.size() << ": " ;
-  // for(int i=0; i< parityBits.size();i++)
-  // {
-    // cout << parityBits.at(i);
-  // }
-  // cout << endl;
-
   // transcode the 7 parity bits
   vector<bool> transcodedParityBits;
   Transcoder::Transcode(parityBits, transcodedParityBits);
 
-  // cout << "transcoded of length: " << transcodedParityBits.size() << ": " ;
-  // for(int i=0; i< transcodedParityBits.size();i++)
-  // {
-    // cout << transcodedParityBits.at(i);
-  // }
-  // cout << endl;
-
-
-  // add the transcoded parity bits, then the transcoded data
+  // add the transcoded parity bits
   add_bits_to_packet(transcodedParityBits, packet);
+
+  // finally add the transcoded data
   add_bits_to_packet(transcodedBits, packet);
 
+  // all done.  Debugging info here...
   if (DEBUG_MODE > 1 )
   {
-    cout << endl << "trn:";
-    for(int i = 0; i< transcodedBits.size(); i++)
-    {
-      cout << transcodedBits.at(i);
-    }
-    cout << endl << endl;
+    Printer::print("raw bits", rawBits);
+    Printer::print("transcoded bits", transcodedBits);
+    Printer::print("raw parity bits", parityBits);
+    Printer::print("transcoded parity bits", transcodedParityBits);
+    Printer::print("packet bits", packet);
+    cout << endl;
   }
 }
 

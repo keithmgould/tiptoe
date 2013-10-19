@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <bitset>
+#include "printer.h"
 #include "constants.h"
 #include "hamming.h"
 #include "transcoder.h"
