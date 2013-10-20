@@ -2,7 +2,16 @@
 #include "../include/constants.h"
 #include "../include/transmitter.h"
 
-// Constructor
+/*
+  The Transmitter's job is to produce audio that encodes
+  the data.
+ */
+
+/*
+ The Constructor is expensive, as it builds waveforms that
+ correspond to each of the five frequencies used by the
+ Tiptoe protocol.
+ */
 Transmitter::Transmitter (int framesPerBuffer)
 {
   this->framesPerBuffer = framesPerBuffer;
@@ -14,7 +23,10 @@ Transmitter::Transmitter (int framesPerBuffer)
   buildWaveforms();
 }
 
-// resets the transmitter with the new data to send
+/*
+ Resets the transmitter with the new data to send
+*/
+
 void Transmitter::setBits ( vector<bool> &transcodedBits )
 {
   this->transcodedBits = transcodedBits;
@@ -24,6 +36,9 @@ void Transmitter::setBits ( vector<bool> &transcodedBits )
 /*
   Emit Sound
   This function places the proper sinusoids in the output buffer
+
+  The function's single argument is a pointer to the Portaudio
+  ouput buffer.
 */
 void Transmitter::emitSound( short *out )
 {
@@ -69,8 +84,10 @@ void Transmitter::emitSound( short *out )
    Builds the waveforms used to generate sound.
    This is done using the standard definition of sine, and then converted
    into a type short via multiplication of 32767.
+
    We also find the amplitude at 70%.  This is because every half second we
    switch from one amplitude to another to defeat Voice Activity Detection (VAD).
+   See http://en.wikipedia.org/wiki/Voice_activity_detection
 */
 
 void Transmitter::buildWaveforms()
@@ -108,7 +125,7 @@ void Transmitter::buildWaveforms()
   Once all the data is modulated, the function returns zeros and ones until the output
   buffer is full.
 
-  TODO: Refactor
+  TODO: Refactor this huge function
  */
 int Transmitter::determineNextMode(int mode, int onFrame)
 {

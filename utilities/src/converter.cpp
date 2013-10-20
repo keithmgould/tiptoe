@@ -2,6 +2,9 @@
 #include "../include/constants.h"
 #include "../include/converter.h"
 
+/*
+   Some basic utilities for converting between two types
+*/
 void Converter::UnsignedCharToBits(unsigned char inputBytes[], vector<bool> &dataBits, int byteCount)
 {
   for(int i = 0; i < byteCount; i++)

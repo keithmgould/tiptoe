@@ -1,28 +1,29 @@
 #include "../include/extractor.h"
 /* Extract
- *
- * Extract's job is the opposite of Transcode's job (and then some.)
- *
- * A Frame sent over the wire has three parts:
- *   1) The preamble: 11110
- *   2) The Data
- *   3) 1s and 0s alternating until the frame is complete (garbage)
- *
- * Extract's job is to extract the data
- *
- * PSEUDO CODE:
- * IF raw bits from previous buffer?
- *    add to current buffer's raw bits
- *
- * IF found 2 preambles in raw bits
- *    extract data inbetween preambles
- *    store 2nd preamble and following raw bits for next buffer
- * ELSEIF found 1 preamble in raw bits
- *    store preamble and following raw bits for next buffer
- * ELSE
- *    // this means the preamble was split in two, so no
- *    // preamble was found
- *    store everything for next buffer
+
+  A Packet sent over the wire has three parts:
+    1) The preamble: 11110
+    2) The Data
+    3) 1s and 0s alternating until the pcaket is complete
+
+  Extract's job is to extract the data.  However, we receive buffers
+  that almost always chop packets in half, so they need to be put
+  back together again.  So we pay attention to what was in the
+  previous buffer, as well as the current buffer.
+
+  PSEUDO CODE:
+  IF raw bits from previous buffer?
+     add to current buffer's raw bits
+
+  IF found 2 preambles in raw bits
+     extract data inbetween preambles
+     store 2nd preamble and following raw bits for next buffer
+  ELSEIF found 1 preamble in raw bits
+     store preamble and following raw bits for next buffer
+  ELSE
+     // this means the preamble was split in two, so no
+     // preamble was found
+     store everything for next buffer
  */
 
 

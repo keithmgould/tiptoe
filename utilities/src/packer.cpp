@@ -1,7 +1,7 @@
 #include "../include/packer.h"
 /*
   The Packer will create the "packet" sent across the wire/air.
-  The packet is 107 bits and structured as follows:
+  The packet is < 107 bits and structured as follows:
 
   bits - usage
   5    - preamble

@@ -3,20 +3,19 @@
 /* Unpack the raw data from the packet
  *
  * Note the preamble is already removed, used by the
- * extractor to determine the boundries of this packet.
+ * Extractor to determine the boundries of this packet.
  */
 
 void Unpacker::unpack(vector<bool> &packet, vector<bool> &data)
 {
-  if(DEBUG_MODE > 1) { Printer::print("packet", packet); }
   // first extract the parity bits by performing untranscode until
   // we have 7 bits of untranscoded data.  We pay attention to how
-  // many of the packets bits were used to do this.
+  // many of the packets bits were used to do this, which will range
+  // from 7 to 14 bits.  We will store that information in the
+  // bitsUsed int.
   int bitsUsed;
   vector<bool> parityBits;
   Untranscoder::Untranscode(packet, parityBits, bitsUsed, 7);
-
-  if(DEBUG_MODE > 1) { Printer::print("parity bits", parityBits); }
 
   // add the raw parity bits to the payload, as hamming.decode
   // expects the form: parity bits | data bits
@@ -39,7 +38,14 @@ void Unpacker::unpack(vector<bool> &packet, vector<bool> &data)
   vector<bool> correctedPayload;
   hamming.decode(payload, correctedPayload);
 
-  // finally untranscode the corrected payload
+  // finally untranscode the corrected payload, yielding the
+  // 48 bits of actual data
   Untranscoder::Untranscode(correctedPayload, data, bitsUsed, 48);
+
+  if(DEBUG_MODE > 1)
+  {
+    Printer::print("packet", packet);
+    Printer::print("parity bits", parityBits);
+  }
 }
 

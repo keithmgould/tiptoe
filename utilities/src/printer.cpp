@@ -1,5 +1,9 @@
 #include "../include/printer.h"
 
+/*
+ Some friendly printing tools for debugging
+*/
+
 void Printer::print(std::string description, vector<bool> &subject)
 {
   cout << description << " (size " << subject.size() << "): ";

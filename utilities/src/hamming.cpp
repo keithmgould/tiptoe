@@ -1,6 +1,18 @@
 #include "../include/hamming.h"
 #include <iostream>
 using namespace std;
+
+/*
+  This Hamming library both encodes and decodes data with parity bits.
+  The parity bit length is arbitrary.
+  http://en.wikipedia.org/wiki/Hamming_code
+ */
+
+/*
+ The constructor runs expensive code so it is only done once at the
+ beginning of application.  It builds the generator matrix as well as
+ the parity check matrix
+*/
 Hamming::Hamming(int parity_bit_length)
 {
   this->parity_bit_length = parity_bit_length;
