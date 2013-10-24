@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     fprintf(stderr,"Error: No default output device.\n");
     goto error;
   }
-  outputParameters.channelCount = 2;       /* mono output */
+  outputParameters.channelCount = 2;       /* stereo output */
   outputParameters.sampleFormat = paInt16;
   outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL;

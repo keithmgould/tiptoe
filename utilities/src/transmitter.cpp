@@ -137,10 +137,10 @@ int Transmitter::determineNextMode(int mode, int onFrame)
   if( this->bitIterator == this->transcodedBits.end() )
   {
     int framesLeft = this->framesPerBuffer - onFrame;
-    if( framesLeft < 20 )
+    // TODO: make this 14 dynamic, based on the waveform with smallest sample count (highest frequency)
+    if( framesLeft < 14 )
     {
-      // cout << framesLeft << ", ";
-      // ok, we only have 8 frames left.  All existing waveforms are larger than 8 frames.
+      // ok, we only have 14 frames left.  All existing waveforms are larger than 14 frames.
       // So we have to engineer a new shiny waveform with the remaining frames.
       short sample;
       this->tContainer.waveforms[50000].clear();
