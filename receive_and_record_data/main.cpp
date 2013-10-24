@@ -126,8 +126,19 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
 }
 
 /*******************************************************************/
-int main(void)
+int main(int argc, char *argv[])
 {
+    int device_id;
+    if(argc != 2)
+    {
+      cout << "Usage: " <<argv[0] << " <device id (int)>" << endl;
+      cout << "try running port-audio's pa_devs binary" << endl;
+      cout << "or if you are on a Raspberry Pi, try $aplay -l" << endl;
+      exit(1);
+    }else{
+      device_id = atoi(argv[1]);
+    }
+
     PaStreamParameters  inputParameters,
                         outputParameters;
     PaStream*           stream;
@@ -159,7 +170,7 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto done;
 
-    inputParameters.device = 3; //Pa_GetDefaultInputDevice(); /* default input device */
+    inputParameters.device = device_id;
     if (inputParameters.device == paNoDevice) {
         fprintf(stderr,"Error: No default input device.\n");
         goto done;
