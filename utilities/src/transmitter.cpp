@@ -181,9 +181,8 @@ int Transmitter::determineNextMode(int mode, int onFrame)
   // to adjust the amplitude.
   timeval time;
   gettimeofday(&time, NULL);
-  long millis = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+  long millis = time.tv_usec / 1000;
   millis = millis % 1000;
-
   amplitudeMode = (millis < 250) || (millis > 500 && millis < 750);
   return mode;
 };
