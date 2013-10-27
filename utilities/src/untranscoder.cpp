@@ -22,10 +22,12 @@ void Untranscoder::Untranscode(vector<bool> &transcoded, vector<bool> &data, int
 {
   data.clear();
   bitsUsed = 0;
+  vector<int> frequencies;
   int frequency = MIDDLE_HIGH;
   bool skip = false;
   for(int i=0; i < transcoded.size(); i++)
   {
+    frequencies.push_back(frequency);
     bitsUsed++;
 
     if(skip)
@@ -49,5 +51,9 @@ void Untranscoder::Untranscode(vector<bool> &transcoded, vector<bool> &data, int
       if(skip == true) { bitsUsed++; }
       break;
     }
+  }
+  if(DEBUG_MODE > 1)
+  {
+    Printer::print("frequencies", frequencies);
   }
 }

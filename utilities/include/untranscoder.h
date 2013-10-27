@@ -3,6 +3,8 @@
 
 #include <vector>
 #include "constants.h"
+#include "printer.h"
+
 using namespace std;
 
 class Untranscoder

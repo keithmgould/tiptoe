@@ -37,7 +37,7 @@ void DeltaFinder::Perform(vector<float>& inputSamples, int sampleCount, int samp
       if(*timeAfterLastBuffersLastCrossing > 0)
       {
         lastCrossingTime = 0 - *timeAfterLastBuffersLastCrossing;
-        if(DEBUG_MODE > 1)
+        if(DEBUG_MODE > 2)
         {
           cout << "first delta info: i=" << i << ", ";
           cout << "talblc= " << *timeAfterLastBuffersLastCrossing << ", ";
@@ -50,7 +50,7 @@ void DeltaFinder::Perform(vector<float>& inputSamples, int sampleCount, int samp
       lastCrossingTime = crossingTime;
     }
   }
-  if(DEBUG_MODE > 1)
+  if(DEBUG_MODE > 2)
   {
     cout << "first 5 samples: ";
     for(int i=0;i < 5;i++)
