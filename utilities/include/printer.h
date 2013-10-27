@@ -11,6 +11,7 @@ class Printer
 {
   public:
   static void print(std::string description, vector<bool> &subject);
+  static void print(std::string description, vector<int> &subject);
 };
 
 #endif
