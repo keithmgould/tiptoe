@@ -61,11 +61,9 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
   data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
   vector<bool> demodulatedBits;
   Demodulator::Perform(deltas, demodulatedBits);
-  // Printer::print("demodulated bits", demodulatedBits);
   Extractor extract(demodulatedBits, data->remainingBits);
   vector<bool> extractedBits;
   extract.perform(extractedBits, data->remainingBits);
-  // Printer::print("extracted bits", extractedBits);
   if(extractedBits.size() > 0)
   {
     data->unpacker->unpack(extractedBits, bits);
@@ -206,16 +204,13 @@ int main(int argc, char *argv[])
     if( err != paNoError ) goto done;
     cout << "Finished" << endl;
 
-    if(DEBUG_MODE > 0)
+    for(int i=0; i < data.bits.size(); i++)
     {
-      for(int i=0; i < data.bits.size(); i++)
+      for(int j=0; j < data.bits.at(i).size(); j++)
       {
-        for(int j=0; j < data.bits.at(i).size(); j++)
-        {
-          cout << data.bits.at(i).at(j);
-        }
-        cout << endl;
+        cout << data.bits.at(i).at(j);
       }
+      cout << endl;
     }
 
     /* Write recorded data to a file. */
