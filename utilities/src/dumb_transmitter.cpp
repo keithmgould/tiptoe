@@ -60,13 +60,14 @@ void Transmitter::emitSound( short *out )
 
     // Here we play with amplitude, shaping it to look like spoken
     // words in order to trick the telco codecs.
-    amp = 0.5;
-    if( i <= (fpb / 2))
-    {
-      amp += i/fpb;
-    }else{
-      amp += (fpb - i) / fpb;
-    }
+    // amp = 0.5;
+    // if( i <= (fpb / 2))
+    // {
+      // amp += i/fpb;
+    // }else{
+      // amp += (fpb - i) / fpb;
+    // }
+    amp = 1;
     if(this->amplitudeMode)
     {
       amp = amp * this->tContainer.waveforms[mode + 100].at(phase++);
@@ -130,7 +131,13 @@ void Transmitter::buildWaveforms()
  */
 int Transmitter::determineNextMode(int mode, int onFrame)
 {
-  mode = (mode + 1) % 2;
+  switch(mode)
+  {
+    case MIDDLE_LOW:
+      mode = MIDDLE_HIGH; break;
+    case MIDDLE_HIGH:
+      mode = MIDDLE_LOW; break;
+  }
 
   // if we are in the second half of a second, add 100 to the mode
   // to adjust the amplitude.
