@@ -9,9 +9,6 @@ main: main.o hamming.o unpacker.o converter.o untranscoder.o printer.o demodulat
 main.o: main.cpp
 	g++ -c main.cpp -I$(PORTAUDIO_INCLUDE) -I$(EIGEN_HOME)
 
-transmit.o: transmit.cpp
-	g++ -c $<
-
 unpacker.o: unpacker.cpp
 	g++ -c $< -I$(EIGEN_HOME)
 
