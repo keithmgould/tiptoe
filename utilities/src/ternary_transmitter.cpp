@@ -54,6 +54,12 @@ void Transmitter::emitSound( short *out )
   {
     if(nextSinusoid)
     {
+      timeval time;
+      gettimeofday(&time, NULL);
+      long millis = time.tv_usec / 1000;
+      millis = millis % 1000;
+      amplitudeMode = (millis < 250) || (millis > 500 && millis < 750);
+
       pointer = (pointer + 1) % 31;
       mode = trits[pointer];
       nextSinusoid = false;
