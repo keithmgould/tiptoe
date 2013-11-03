@@ -13,7 +13,7 @@
  Tiptoe protocol.
  */
 
-Transmitter::Transmitter (int framesPerBuffer)
+Transmitter::Transmitter (int framesPerBuffer, int low_freq, int high_freq)
 {
   this->framesPerBuffer = framesPerBuffer;
   this->tContainer.waveformSizes[PREAMBLE_LOW] = (double) SAMPLE_RATE / (double) PREAMBLE_LOW_FREQUENCY;
@@ -24,8 +24,8 @@ Transmitter::Transmitter (int framesPerBuffer)
   this->tContainer.waveformSizes[TEST_HIGH] = (double) SAMPLE_RATE / (double) TEST_HIGH_FREQUENCY;
   buildWaveforms();
 
-  low_frequency = EDGE_HIGH;
-  high_frequency = TEST_HIGH;
+  low_frequency = low_freq;
+  high_frequency = high_freq;
 }
 
 /*

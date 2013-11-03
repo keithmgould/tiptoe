@@ -58,21 +58,27 @@ static int transmitCallback( const void *inputBuffer, void *outputBuffer, unsign
 int main(int argc, char *argv[])
 {
   int device_id;
-  if(argc != 2)
+  int low_freq;
+  int high_freq;
+  if(argc != 4)
   {
-    cout << "Usage: " <<argv[0] << " <device id (int)>" << endl;
+    cout << "Usage: " <<argv[0] << " <device id (int)> <low freq mode(int)> <high freq mode(int)>" << endl;
     cout << "try running port-audio's pa_devs binary" << endl;
     cout << "or if you are on a Raspberry Pi, try $aplay -l" << endl;
+    cout << "check utilities/include/constants.h for frequency modes" << endl;
+    cout << "example: ./main 4 3 5" << endl;
     exit(1);
   }else{
     device_id = atoi(argv[1]);
+    low_freq = atoi(argv[2]);
+    high_freq = atoi(argv[3]);
   }
   PaStreamParameters outputParameters;
   PaStream *stream;
   PaError err;
   callbackData data;
 
-  Transmitter transmitter(FRAMES_PER_BUFFER);
+  Transmitter transmitter(FRAMES_PER_BUFFER, low_freq, high_freq);
   data.transmitter = &transmitter;
 
   data.bufferCounter = 0;

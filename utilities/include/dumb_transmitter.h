@@ -34,7 +34,7 @@ class Transmitter {
   void emitSound(short *out );
   void setBits(vector<bool> &transcodedBits);
   transmitContainer tContainer;
-  Transmitter (int framesPerBuffer);
+  Transmitter (int framesPerBuffer, int low_freq, int high_freq);
 };
 
 #endif
