@@ -50,6 +50,7 @@ void Transmitter::emitSound( short *out )
 {
   bool nextSinusoid = false;
   int phase = 0;
+  position = 0;
   int mode = low_frequency;
   float amp;
   float fpb;
@@ -136,13 +137,21 @@ void Transmitter::buildWaveforms()
  */
 int Transmitter::determineNextMode(int mode, int onFrame)
 {
-  if(mode == low_frequency)
-  {
+  // if(mode == low_frequency)
+  // {
+    // mode = high_frequency;
+  // }else{
+    // mode = low_frequency;
+  // }
+
+  int pattern[20] = { 0,0,0,1,1,1,0,1,0,1,
+                      0,1,0,1,0,0,0,0,1,1 };
+  if(pattern[position] == 1){
     mode = high_frequency;
   }else{
     mode = low_frequency;
   }
-
+  position = (position + 1) % 20;
   // if we are in the second half of a second, add 100 to the mode
   // to adjust the amplitude.
   timeval time;

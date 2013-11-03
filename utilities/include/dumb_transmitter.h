@@ -30,6 +30,7 @@ class Transmitter {
   int determineNextMode(int mode, int onFrame);
   int low_frequency;
   int high_frequency;
+  int position;
   public:
   void emitSound(short *out );
   void setBits(vector<bool> &transcodedBits);
