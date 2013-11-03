@@ -145,7 +145,7 @@ int Transmitter::determineNextMode(int mode, int onFrame)
   // }
 
   int pattern[20] = { 0,0,0,1,1,1,0,1,0,1,
-                      0,1,0,1,0,0,0,0,1,1 };
+                      0,1,0,1,0,0,1,0,1,1 };
   if(pattern[position] == 1){
     mode = high_frequency;
   }else{

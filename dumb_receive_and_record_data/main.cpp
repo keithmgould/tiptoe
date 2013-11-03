@@ -199,6 +199,13 @@ int main(int argc, char *argv[])
     if( err != paNoError ) goto done;
     cout << "Finished" << endl;
 
+
+    for(int i=0; i < data.deltas.at(0).size(); i++)
+    {
+        cout << data.deltas.at(0).at(i) << ",";
+    }
+    cout << endl << endl;
+
     // for(int i=0; i < data.deltas.size(); i++)
     // {
       // cout << i << ": ";
