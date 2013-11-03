@@ -4,6 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include "../utilities/include/printer.h"
 #include "../utilities/include/constants.h"
@@ -33,6 +34,7 @@ typedef struct
     float       lastBuffersLastDelta;
     float       lastBuffersLastSample;
     vector < vector<bool> > bits;                 // hold the data for testing
+    vector < vector<float> > deltas;                 // hold the data for testing
     vector<bool> remainingBits;
 
 }
@@ -53,6 +55,7 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
     deltas.push_back(data->lastBuffersLastDelta);
   }
   DeltaFinder::Perform(inputSamples, FRAMES_PER_BUFFER, SAMPLE_RATE, deltas, &data->timeAfterLastBuffersLastCrossing);
+  data->deltas.push_back(deltas);
   data->lastBuffersLastDelta = deltas.back();
   data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
   vector<bool> demodulatedBits;
@@ -188,8 +191,27 @@ int main(int argc, char *argv[])
     if( err != paNoError ) goto done;
     cout << "Finished" << endl;
 
+    // for(int i=0; i < data.deltas.size(); i++)
+    // {
+      // cout << i << ": ";
+      // for(int j=0; j < data.deltas.at(i).size(); j++)
+      // {
+        // cout << data.deltas.at(i).at(j) << ", ";
+      // }
+      // cout << endl;
+    // }
+
+    for(int j=1; j < data.bits.at(0).size(); j++)
+    {
+      cout << data.deltas.at(0).at(j-1) << " < ";
+      cout << data.deltas.at(0).at(j) << " ? \t";
+      cout << (data.deltas.at(0).at(j-1) < data.deltas.at(0).at(j)) << " -- dif: ";
+      cout << fixed << (data.deltas.at(0).at(j) - data.deltas.at(0).at(j-1)) << endl;
+    }
+
     for(int i=0; i < data.bits.size(); i++)
     {
+      cout << i << ": ";
       for(int j=0; j < data.bits.at(i).size(); j++)
       {
         cout << data.bits.at(i).at(j);
