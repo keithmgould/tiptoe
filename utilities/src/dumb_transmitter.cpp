@@ -1,6 +1,6 @@
 #include <iostream>
 #include "../include/constants.h"
-#include "../include/transmitter.h"
+#include "../include/dumb_transmitter.h"
 
 /*
   The Transmitter's job is to produce audio that encodes
@@ -12,6 +12,7 @@
  correspond to each of the five frequencies used by the
  Tiptoe protocol.
  */
+
 Transmitter::Transmitter (int framesPerBuffer)
 {
   this->framesPerBuffer = framesPerBuffer;
@@ -20,7 +21,11 @@ Transmitter::Transmitter (int framesPerBuffer)
   this->tContainer.waveformSizes[MIDDLE_LOW] = (double) SAMPLE_RATE / (double) MIDDLE_LOW_FREQUENCY;
   this->tContainer.waveformSizes[MIDDLE_HIGH] = (double) SAMPLE_RATE / (double) MIDDLE_HIGH_FREQUENCY;
   this->tContainer.waveformSizes[EDGE_HIGH] = (double) SAMPLE_RATE / (double) EDGE_HIGH_FREQUENCY;
+  this->tContainer.waveformSizes[TEST_HIGH] = (double) SAMPLE_RATE / (double) TEST_HIGH_FREQUENCY;
   buildWaveforms();
+
+  low_frequency = EDGE_HIGH;
+  high_frequency = TEST_HIGH;
 }
 
 /*
@@ -45,7 +50,7 @@ void Transmitter::emitSound( short *out )
 {
   bool nextSinusoid = false;
   int phase = 0;
-  int mode = MIDDLE_LOW;
+  int mode = low_frequency;
   float amp;
   float fpb;
   fpb = this->framesPerBuffer;
@@ -131,12 +136,11 @@ void Transmitter::buildWaveforms()
  */
 int Transmitter::determineNextMode(int mode, int onFrame)
 {
-  switch(mode)
+  if(mode == low_frequency)
   {
-    case MIDDLE_LOW:
-      mode = MIDDLE_HIGH; break;
-    case MIDDLE_HIGH:
-      mode = MIDDLE_LOW; break;
+    mode = high_frequency;
+  }else{
+    mode = low_frequency;
   }
 
   // if we are in the second half of a second, add 100 to the mode

@@ -28,6 +28,8 @@ class Transmitter {
   bool amplitudeMode;
   void buildWaveforms();
   int determineNextMode(int mode, int onFrame);
+  int low_frequency;
+  int high_frequency;
   public:
   void emitSound(short *out );
   void setBits(vector<bool> &transcodedBits);
