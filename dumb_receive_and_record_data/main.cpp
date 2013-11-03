@@ -58,8 +58,16 @@ void demodulator(const void * inputBuffer, paTestData * data, vector<bool>& bits
   data->deltas.push_back(deltas);
   data->lastBuffersLastDelta = deltas.back();
   data->lastBuffersLastSample = floatInputBuffer[FRAMES_PER_BUFFER - 1];
+
   vector<bool> demodulatedBits;
-  Demodulator::Perform(deltas, demodulatedBits);
+  for(int i=0; i < deltas.size(); i++)
+  {
+    if(deltas.at(i) < 0.0003508){
+      demodulatedBits.push_back(1);
+    }else{
+      demodulatedBits.push_back(0);
+    }
+  }
   if(demodulatedBits.size() > 0) { data->bits.push_back(demodulatedBits); }
 }
 
@@ -201,13 +209,13 @@ int main(int argc, char *argv[])
       // cout << endl;
     // }
 
-    for(int j=1; j < data.bits.at(0).size(); j++)
-    {
-      cout << data.deltas.at(0).at(j-1) << " < ";
-      cout << data.deltas.at(0).at(j) << " ? \t";
-      cout << (data.deltas.at(0).at(j-1) < data.deltas.at(0).at(j)) << " -- dif: ";
-      cout << fixed << (data.deltas.at(0).at(j) - data.deltas.at(0).at(j-1)) << endl;
-    }
+    // for(int j=1; j < data.bits.at(0).size(); j++)
+    // {
+      // cout << data.deltas.at(0).at(j-1) << " < ";
+      // cout << data.deltas.at(0).at(j) << " ? \t";
+      // cout << (data.deltas.at(0).at(j-1) < data.deltas.at(0).at(j)) << " -- dif: ";
+      // cout << fixed << (data.deltas.at(0).at(j) - data.deltas.at(0).at(j-1)) << endl;
+    // }
 
     for(int i=0; i < data.bits.size(); i++)
     {
