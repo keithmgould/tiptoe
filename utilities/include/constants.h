@@ -11,7 +11,7 @@
 #define MIDDLE_LOW_FREQUENCY   (2700)
 #define MIDDLE_HIGH_FREQUENCY  (3000)
 #define EDGE_HIGH_FREQUENCY    (3300)
-#define TEST_HIGH_FREQUENCY    (3600)
+#define TEST_HIGH_FREQUENCY    (3600) // Telcos codecs go apeshit here...
 
 
 // the various frequency modes
