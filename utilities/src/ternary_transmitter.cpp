@@ -131,9 +131,9 @@ void Transmitter::buildWaveforms()
  */
 int Transmitter::determineNextMode(int mode, int onFrame)
 {
-  int pattern[54] = { 1,1,1,3,3,3,5,5,5,1,1,1,3,3,3,5,5,5,
-                      1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-                      5,5,5,1,1,1,5,5,5,1,1,1,5,5,5,1,1,1 };
+  int pattern[54] = { 4,4,4,3,3,3,5,5,5,4,4,4,3,3,3,5,5,5,
+                      4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+                      5,5,5,4,4,4,5,5,5,4,4,4,5,5,5,4,4,4 };
 
   position = (position + 1) % 54;
   mode = pattern[position];
